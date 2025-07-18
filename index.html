@@ -1,0 +1,2139 @@
+# Enhanced Science Chatbot with JotForm Features (Voice Call, Forms, etc.)
+
+Here's a comprehensive implementation of a science chatbot with JotForm-like features including voice calling, form integration, and other professional enhancements:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science AI Assistant with JotForm Features</title>
+    <style>
+        /* ========== BASE STYLES ========== */
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --white: #ffffff;
+            --black: #000000;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* ========== CHATBOT CONTAINER ========== */
+        .chatbot-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 15px;
+        }
+
+        /* ========== CHATBOT TOGGLE BUTTON ========== */
+        .chatbot-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--box-shadow);
+            border: none;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chatbot-toggle:hover {
+            transform: scale(1.05);
+            background-color: #3a5af5;
+        }
+
+        .chatbot-toggle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .chatbot-toggle:hover::before {
+            opacity: 1;
+        }
+
+        .chatbot-toggle i {
+            font-size: 24px;
+        }
+
+        .chatbot-toggle.active {
+            transform: rotate(360deg);
+            background-color: var(--danger-color);
+        }
+
+        /* ========== CHATBOT WINDOW ========== */
+        .chatbot-window {
+            width: 380px;
+            max-width: 95vw;
+            height: 600px;
+            max-height: 80vh;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: var(--transition);
+            visibility: hidden;
+        }
+
+        .chatbot-window.visible {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chatbot-window.dark-mode {
+            background-color: #2d3748;
+            color: #f7fafc;
+        }
+
+        /* ========== CHATBOT HEADER ========== */
+        .chatbot-header {
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            cursor: move;
+        }
+
+        .chatbot-header.dark-mode {
+            background-color: #1a202c;
+        }
+
+        .chatbot-title {
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chatbot-title i {
+            font-size: 18px;
+        }
+
+        .chatbot-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chatbot-close, .chatbot-theme-toggle, .chatbot-tts-toggle, .chatbot-call-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .chatbot-close:hover, .chatbot-theme-toggle:hover, .chatbot-tts-toggle:hover, .chatbot-call-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ========== CHATBOT MESSAGES ========== */
+        .chatbot-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .chatbot-messages.dark-mode {
+            background-color: #2d3748;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 0;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: #f1f3f6;
+            color: #333;
+            border-bottom-left-radius: 0;
+        }
+
+        .dark-mode .bot-message {
+            background-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .message-time {
+            display: block;
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .bot-message .message-time {
+            color: #666;
+        }
+
+        .dark-mode .bot-message .message-time {
+            color: #cbd5e0;
+        }
+
+        .user-message .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* ========== TYPING INDICATOR ========== */
+        .typing-indicator {
+            display: flex;
+            gap: 6px;
+            padding: 12px 16px;
+            background-color: #f1f3f6;
+            border-radius: var(--border-radius);
+            width: fit-content;
+            margin-bottom: 15px;
+        }
+
+        .dark-mode .typing-indicator {
+            background-color: #4a5568;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .dark-mode .typing-dot {
+            background-color: #cbd5e0;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        /* ========== CHATBOT INPUT AREA ========== */
+        .chatbot-input-area {
+            padding: 15px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+            background-color: white;
+        }
+
+        .dark-mode .chatbot-input-area {
+            background-color: #2d3748;
+            border-top-color: #4a5568;
+        }
+
+        .chatbot-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            outline: none;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .dark-mode .chatbot-input {
+            background-color: #4a5568;
+            border-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .chatbot-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+        }
+
+        .chatbot-send, .chatbot-voice, .chatbot-form {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .chatbot-send:hover, .chatbot-voice:hover, .chatbot-form:hover {
+            background-color: #3a5af5;
+        }
+
+        .chatbot-send:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .chatbot-voice.listening {
+            background-color: var(--danger-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        /* ========== CALL INTERFACE ========== */
+        .call-container {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .call-container.active {
+            display: flex;
+        }
+
+        .call-header {
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .call-video-container {
+            flex: 1;
+            background-color: #1a202c;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 90px;
+            border-radius: 8px;
+            border: 2px solid white;
+            object-fit: cover;
+            z-index: 10;
+        }
+
+        .call-controls {
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background-color: white;
+        }
+
+        .dark-mode .call-controls {
+            background-color: #2d3748;
+        }
+
+        .call-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            color: white;
+            font-size: 20px;
+        }
+
+        .call-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .call-end {
+            background-color: var(--danger-color);
+        }
+
+        .call-mute {
+            background-color: var(--secondary-color);
+        }
+
+        .call-video-toggle {
+            background-color: var(--secondary-color);
+        }
+
+        /* ========== FORM CONTAINER ========== */
+        .form-container {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .form-container.active {
+            display: flex;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .dark-mode .form-title {
+            color: #63b3ed;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .dark-mode .form-input, 
+        .dark-mode .form-textarea, 
+        .dark-mode .form-select {
+            background-color: #4a5568;
+            border-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .form-input:focus, 
+        .form-textarea:focus, 
+        .form-select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-submit {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .form-submit:hover {
+            background-color: #3a5af5;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* ========== TOPIC SUGGESTIONS ========== */
+        .topic-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .topic-chip {
+            background-color: #e5e7eb;
+            color: #333;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dark-mode .topic-chip {
+            background-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .topic-chip:hover {
+            background-color: #d1d5db;
+        }
+
+        .dark-mode .topic-chip:hover {
+            background-color: #718096;
+        }
+
+        /* ========== RESPONSIVE ADJUSTMENTS ========== */
+        @media (max-width: 480px) {
+            .chatbot-container {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .chatbot-window {
+                width: 95vw;
+                height: 80vh;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* ========== MARKDOWN STYLES ========== */
+        .bot-message strong {
+            font-weight: 600;
+        }
+
+        .bot-message em {
+            font-style: italic;
+        }
+
+        .bot-message pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+        }
+
+        .dark-mode .bot-message pre {
+            background-color: #1a202c;
+        }
+
+        .bot-message code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .dark-mode .bot-message code {
+            background-color: #1a202c;
+        }
+
+        .bot-message a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .dark-mode .bot-message a {
+            color: #63b3ed;
+        }
+
+        .bot-message a:hover {
+            text-decoration: underline;
+        }
+
+        .bot-message ul, .bot-message ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        /* ========== NOTIFICATION ========== */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+
+        .notification.warning {
+            background-color: var(--warning-color);
+            color: var(--black);
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Notification System -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-message">Success!</span>
+    </div>
+
+    <!-- Chatbot Container -->
+    <div class="chatbot-container">
+        <!-- Chatbot Toggle Button -->
+        <button class="chatbot-toggle" id="chatbotToggle">
+            <i class="fas fa-robot"></i>
+        </button>
+
+        <!-- Chatbot Window -->
+        <div class="chatbot-window" id="chatbotWindow">
+            <!-- Chatbot Header -->
+            <div class="chatbot-header" id="chatbotHeader">
+                <div class="chatbot-title">
+                    <i class="fas fa-robot"></i>
+                    <span>Science AI Assistant</span>
+                </div>
+                <div class="chatbot-actions">
+                    <button class="chatbot-call-toggle" id="chatbotCallToggle" title="Voice Call">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="chatbot-form-toggle" id="chatbotFormToggle" title="Forms">
+                        <i class="fas fa-file-alt"></i>
+                    </button>
+                    <button class="chatbot-tts-toggle" id="chatbotTTSToggle" title="Toggle TTS">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <button class="chatbot-theme-toggle" id="chatbotThemeToggle" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="chatbot-close" id="chatbotClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Chat Interface -->
+            <div class="chatbot-messages" id="chatbotMessages"></div>
+
+            <!-- Call Interface (Hidden by default) -->
+            <div class="call-container" id="callContainer">
+                <div class="call-header">
+                    <span id="callStatus">Calling...</span>
+                </div>
+                <div class="call-video-container">
+                    <video class="remote-video" id="remoteVideo" autoplay playsinline></video>
+                    <video class="local-video" id="localVideo" autoplay playsinline muted></video>
+                </div>
+                <div class="call-controls">
+                    <button class="call-btn call-mute" id="callMute" title="Mute">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="call-btn call-video-toggle" id="callVideoToggle" title="Toggle Video">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="call-btn call-end" id="callEnd" title="End Call">
+                        <i class="fas fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Interface (Hidden by default) -->
+            <div class="form-container" id="formContainer">
+                <h3 class="form-title" id="formTitle">Feedback Form</h3>
+                <form id="feedbackForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" id="name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select id="subject" class="form-select">
+                            <option value="feedback">General Feedback</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea id="message" class="form-textarea" required></textarea>
+                    </div>
+                    <button type="submit" class="form-submit">Submit</button>
+                </form>
+            </div>
+
+            <!-- Input Area (Visible in chat mode) -->
+            <div class="chatbot-input-area" id="chatbotInputArea">
+                <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask me about science...">
+                <button class="chatbot-voice" id="chatbotVoice" title="Voice Input">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="chatbot-send" id="chatbotSend" title="Send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ========== DOM ELEMENTS ========== //
+            const elements = {
+                // Chatbot elements
+                chatbotToggle: document.getElementById('chatbotToggle'),
+                chatbotWindow: document.getElementById('chatbotWindow'),
+                chatbotClose: document.getElementById('chatbotClose'),
+                chatbotMessages: document.getElementById('chatbotMessages'),
+                chatbotInput: document.getElementById('chatbotInput'),
+                chatbotSend: document.getElementById('chatbotSend'),
+                chatbotVoice: document.getElementById('chatbotVoice'),
+                chatbotThemeToggle: document.getElementById('chatbotThemeToggle'),
+                chatbotTTSToggle: document.getElementById('chatbotTTSToggle'),
+                chatbotHeader: document.getElementById('chatbotHeader'),
+                chatbotInputArea: document.getElementById('chatbotInputArea'),
+                
+                // Call elements
+                callContainer: document.getElementById('callContainer'),
+                callStatus: document.getElementById('callStatus'),
+                remoteVideo: document.getElementById('remoteVideo'),
+                localVideo: document.getElementById('localVideo'),
+                callMute: document.getElementById('callMute'),
+                callVideoToggle: document.getElementById('callVideoToggle'),
+                callEnd: document.getElementById('callEnd'),
+                chatbotCallToggle: document.getElementById('chatbotCallToggle'),
+                
+                // Form elements
+                formContainer: document.getElementById('formContainer'),
+                formTitle: document.getElementById('formTitle'),
+                feedbackForm: document.getElementById('feedbackForm'),
+                chatbotFormToggle: document.getElementById('chatbotFormToggle'),
+                
+                // Notification
+                notification: document.getElementById('notification'),
+                notificationMessage: document.getElementById('notification-message')
+            };
+
+            // ========== STATE MANAGEMENT ========== //
+            const state = {
+                // Chat state
+                isListening: false,
+                ttsEnabled: false,
+                darkMode: false,
+                recognition: null,
+                isDragging: false,
+                dragOffsetX: 0,
+                dragOffsetY: 0,
+                currentTopic: null,
+                isFirstVisit: !localStorage.getItem('chatbotVisited'),
+                hasShownIntroduction: false,
+                conversationHistory: [],
+                
+                // Call state
+                callActive: false,
+                isMuted: false,
+                isVideoOff: false,
+                peerConnection: null,
+                localStream: null,
+                dataChannel: null,
+                
+                // User profile
+                userProfile: {
+                    preferredTopics: [],
+                    knowledgeLevel: 'beginner',
+                    previousQuestions: [],
+                    interactionCount: 0,
+                    preferredLanguage: navigator.language || 'en-US',
+                    contactInfo: {
+                        name: '',
+                        email: ''
+                    }
+                },
+                
+                // Constants
+                constants: {
+                    MAX_HISTORY_LENGTH: 20,
+                    TYPING_DELAY: 1500,
+                    INTRODUCTION_DELAY: 2000,
+                    MAX_TOPIC_SUGGESTIONS: 3,
+                    ICE_SERVERS: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                }
+            };
+
+            // ========== KNOWLEDGE BASE & CONFIGURATION ========== //
+            const config = {
+                apis: {
+                    scienceAndFacts: {
+                        baseUrl: 'https://6124224.github.io/ScienceAndFacts/',
+                        topics: {
+                            quantum: '#quantum-physics',
+                            space: '#space-exploration',
+                            chemistry: '#chemistry-wonders',
+                            biology: '#biology-marvels',
+                            physics: '#physics-fundamentals'
+                        }
+                    },
+                    wikipedia: {
+                        endpoint: 'https://en.wikipedia.org/api/rest_v1/page/summary/',
+                        searchEndpoint: 'https://en.wikipedia.org/w/api.php?action=opensearch&search='
+                    },
+                    nasa: {
+                        apod: 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY',
+                        imageLibrary: 'https://images-api.nasa.gov/search'
+                    },
+                    jotformAI: {
+                        endpoint: 'https://api.jotform.ai/v1/chat/completions',
+                        apiKey: 'YOUR_JOTFORM_AI_API_KEY' // Replace with actual API key
+                    },
+                    signalingServer: 'wss://your-signaling-server.com' // Replace with your signaling server
+                },
+                nlp: {
+                    questionWords: ['what', 'how', 'why', 'when', 'where', 'which', 'who', 'explain', 'tell'],
+                    greetingPatterns: /\b(hello|hi|hey|greetings|good\s(morning|afternoon|evening))\b/i,
+                    thanksPatterns: /\b(thank|thanks|appreciate|grateful)\b/i,
+                    explanationRequests: /\b(explain|describe|tell me about|what is|how does|define)\b/i,
+                    curiosityPatterns: /\b(interesting|fascinating|amazing|wow|cool|awesome|neat)\b/i,
+                    confusionPatterns: /\b(confused|don'?t understand|unclear|complex|difficult)\b/i,
+                    helpPatterns: /\b(help|assist|support|guide)\b/i,
+                    topicChangePatterns: /\b(what else|another topic|different subject|change topic)\b/i,
+                    callPatterns: /\b(call|video chat|voice chat|talk to expert)\b/i,
+                    formPatterns: /\b(form|survey|feedback|contact|request)\b/i
+                },
+                responses: {
+                    greetings: [
+                        "Hello! I'm your AI Science Guide. What fascinating topic would you like to explore today?",
+                        "Hi there! Ready to dive into the amazing world of science?",
+                        "Greetings, curious mind! What scientific mystery shall we unravel together?"
+                    ],
+                    thanks: [
+                        "You're very welcome! Science is even more fun when shared.",
+                        "My pleasure! Keep that curiosity flowing.",
+                        "Happy to help! The universe is full of wonders."
+                    ],
+                    encouragement: [
+                        "That's a fantastic question! Let me break it down for you:",
+                        "Great curiosity! Here's what science tells us:",
+                        "Excellent thinking! This is a really important concept:"
+                    ],
+                    confusionHelp: [
+                        "No worries! Let me explain it in simpler terms:",
+                        "I understand this can be complex. Let me break it down step by step:",
+                        "That's totally normal to find this confusing! Here's a clearer explanation:"
+                    ],
+                    topicTransitions: [
+                        "Speaking of that, you might also be interested in:",
+                        "This connects beautifully to another fascinating topic:",
+                        "Since you're curious about this, here's something related:"
+                    ],
+                    callResponses: [
+                        "I can connect you with a science expert via video call. Would you like to proceed?",
+                        "For more detailed discussion, I can initiate a video call with an expert.",
+                        "Let me connect you with someone who can help with this complex topic."
+                    ],
+                    formResponses: [
+                        "I can provide you with a form to collect more details about your request.",
+                        "Let me show you a form where you can provide more information.",
+                        "I'll display a form to better understand your needs."
+                    ],
+                    errorResponses: {
+                        network: "I'm having trouble connecting to external services right now. Try again later.",
+                        api: "I couldn't retrieve information from that source. Maybe try a different question?",
+                        general: "Something went wrong. Let's try a different approach.",
+                        call: "I couldn't establish the call. Please check your microphone and camera permissions.",
+                        form: "There was an issue submitting your form. Please try again later."
+                    }
+                },
+                forms: {
+                    feedback: {
+                        title: "Feedback Form",
+                        fields: [
+                            { type: 'text', label: 'Name', required: true },
+                            { type: 'email', label: 'Email', required: true },
+                            { 
+                                type: 'select', 
+                                label: 'Subject', 
+                                options: [
+                                    'General Feedback',
+                                    'Bug Report',
+                                    'Feature Request',
+                                    'Other'
+                                ]
+                            },
+                            { type: 'textarea', label: 'Message', required: true }
+                        ]
+                    },
+                    expertRequest: {
+                        title: "Expert Consultation Request",
+                        fields: [
+                            { type: 'text', label: 'Name', required: true },
+                            { type: 'email', label: 'Email', required: true },
+                            { type: 'text', label: 'Topic', required: true },
+                            { 
+                                type: 'select', 
+                                label: 'Expertise Level', 
+                                options: [
+                                    'Beginner',
+                                    'Intermediate',
+                                    'Advanced'
+                                ]
+                            },
+                            { type: 'textarea', label: 'Specific Questions', required: true }
+                        ]
+                    }
+                }
+            };
+
+            // Enhanced knowledge base with Jotform AI integration points
+            const knowledgeBase = {
+                quantum: {
+                    keywords: ['quantum', 'qubit', 'superposition', 'entanglement', 'heisenberg'],
+                    definition: "🔬 Quantum Physics explores matter and energy at the smallest scales.",
+                    explanation: "Reveals particles can exist in multiple states simultaneously (superposition) and be instantly connected across distances (entanglement).",
+                    examples: [
+                        "Schrödinger's cat demonstrates quantum superposition",
+                        "Quantum tunneling allows particles to pass through barriers"
+                    ],
+                    applications: ["Quantum computing", "Quantum cryptography"],
+                    funFacts: [
+                        "Quantum tunneling is essential for the sun's nuclear fusion",
+                        "Your smartphone uses quantum effects in its transistors"
+                    ],
+                    level: 'advanced',
+                    related: ['particle physics', 'atomic structure']
+                },
+                space: {
+                    keywords: ['space', 'astronomy', 'galaxy', 'planet', 'black hole'],
+                    definition: "🚀 Space exploration involves the discovery and exploration of celestial structures.",
+                    explanation: "Encompasses the study of stars, planets, galaxies, and the universe as a whole using telescopes, satellites, and space probes.",
+                    examples: [
+                        "Hubble Space Telescope has captured stunning images of distant galaxies",
+                        "Mars rovers like Perseverance explore the Martian surface"
+                    ],
+                    applications: ["Satellite communications", "Earth observation", "Astrobiology"],
+                    funFacts: [
+                        "The observable universe contains about 2 trillion galaxies",
+                        "A day on Venus is longer than its year"
+                    ],
+                    level: 'intermediate',
+                    related: ['astrophysics', 'cosmology']
+                }
+                // More topics can be added here...
+            };
+
+            // ========== CORE FUNCTIONS ========== //
+
+            /**
+             * Initialize the chatbot with all required setup
+             */
+            function initChatbot() {
+                setupEventListeners();
+                loadUserPreferences();
+                initSpeechRecognition();
+                initDragAndDrop();
+                
+                if (state.isFirstVisit) {
+                    localStorage.setItem('chatbotVisited', 'true');
+                    scheduleIntroduction();
+                }
+                
+                // Check for Jotform AI API key
+                if (config.apis.jotformAI.apiKey === 'YOUR_JOTFORM_AI_API_KEY') {
+                    console.warn('Jotform AI API key not configured. Some advanced features may not work.');
+                }
+                
+                // Initialize WebRTC if available
+                if (typeof RTCPeerConnection !== 'undefined') {
+                    initWebRTC();
+                } else {
+                    console.warn('WebRTC not supported in this browser. Voice call feature will be disabled.');
+                }
+            }
+
+            /**
+             * Set up all event listeners for the chatbot
+             */
+            function setupEventListeners() {
+                // Toggle chatbot window
+                if (elements.chatbotToggle) {
+                    elements.chatbotToggle.addEventListener('click', toggleChatbotWindow);
+                }
+                
+                // Close button
+                if (elements.chatbotClose) {
+                    elements.chatbotClose.addEventListener('click', toggleChatbotWindow);
+                }
+                
+                // Message sending
+                if (elements.chatbotSend) {
+                    elements.chatbotSend.addEventListener('click', sendMessage);
+                }
+                
+                // Input field
+                if (elements.chatbotInput) {
+                    elements.chatbotInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            sendMessage();
+                        }
+                    });
+                }
+                
+                // Voice control
+                if (elements.chatbotVoice) {
+                    elements.chatbotVoice.addEventListener('click', toggleVoiceRecognition);
+                }
+                
+                // Theme toggle
+                if (elements.chatbotThemeToggle) {
+                    elements.chatbotThemeToggle.addEventListener('click', toggleDarkMode);
+                }
+                
+                // TTS toggle
+                if (elements.chatbotTTSToggle) {
+                    elements.chatbotTTSToggle.addEventListener('click', toggleTTS);
+                }
+                
+                // Call toggle
+                if (elements.chatbotCallToggle) {
+                    elements.chatbotCallToggle.addEventListener('click', toggleCallInterface);
+                }
+                
+                // Form toggle
+                if (elements.chatbotFormToggle) {                    elements.chatbotFormToggle.addEventListener('click', toggleFormInterface);
+                }
+                
+                // Call controls
+                if (elements.callMute) {
+                    elements.callMute.addEventListener('click', toggleMute);
+                }
+                
+                if (elements.callVideoToggle) {
+                    elements.callVideoToggle.addEventListener('click', toggleVideo);
+                }
+                
+                if (elements.callEnd) {
+                    elements.callEnd.addEventListener('click', endCall);
+                }
+                
+                // Form submission
+                if (elements.feedbackForm) {
+                    elements.feedbackForm.addEventListener('submit', handleFormSubmission);
+                }
+            }
+
+            /**
+             * Initialize WebRTC for voice/video calls
+             */
+            function initWebRTC() {
+                // This would normally connect to a signaling server
+                // For demo purposes, we'll just set up the basic structure
+                state.peerConnection = new RTCPeerConnection({
+                    iceServers: state.constants.ICE_SERVERS
+                });
+
+                // Set up event handlers for the RTCPeerConnection
+                state.peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        // Send the candidate to the remote peer
+                        console.log('ICE candidate:', event.candidate);
+                    }
+                };
+
+                state.peerConnection.ontrack = (event) => {
+                    if (event.streams && event.streams[0]) {
+                        elements.remoteVideo.srcObject = event.streams[0];
+                    }
+                };
+
+                // Create a data channel for text communication during calls
+                state.dataChannel = state.peerConnection.createDataChannel('chat');
+                state.dataChannel.onmessage = (event) => {
+                    // Handle incoming messages during call
+                    addMessageToChat('Expert', event.data, false);
+                };
+                state.dataChannel.onopen = () => {
+                    console.log('Data channel opened');
+                };
+                state.dataChannel.onclose = () => {
+                    console.log('Data channel closed');
+                };
+            }
+
+            /**
+             * Initialize drag and drop functionality for the chatbot window
+             */
+            function initDragAndDrop() {
+                elements.chatbotHeader.addEventListener('mousedown', (e) => {
+                    if (e.target === elements.chatbotHeader || e.target.closest('.chatbot-title')) {
+                        state.isDragging = true;
+                        const rect = elements.chatbotWindow.getBoundingClientRect();
+                        state.dragOffsetX = e.clientX - rect.left;
+                        state.dragOffsetY = e.clientY - rect.top;
+                        elements.chatbotWindow.style.cursor = 'grabbing';
+                    }
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (state.isDragging) {
+                        const x = e.clientX - state.dragOffsetX;
+                        const y = e.clientY - state.dragOffsetY;
+                        
+                        // Constrain to viewport
+                        const maxX = window.innerWidth - elements.chatbotWindow.offsetWidth;
+                        const maxY = window.innerHeight - elements.chatbotWindow.offsetHeight;
+                        
+                        elements.chatbotWindow.style.left = `${Math.min(Math.max(0, x), maxX}px`;
+                        elements.chatbotWindow.style.top = `${Math.min(Math.max(0, y), maxY}px`;
+                        elements.chatbotWindow.style.right = 'auto';
+                        elements.chatbotWindow.style.bottom = 'auto';
+                        elements.chatbotWindow.style.transform = 'none';
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    state.isDragging = false;
+                    elements.chatbotWindow.style.cursor = '';
+                });
+            }
+
+            /**
+             * Initialize speech recognition for voice input
+             */
+            function initSpeechRecognition() {
+                try {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (SpeechRecognition) {
+                        state.recognition = new SpeechRecognition();
+                        state.recognition.continuous = false;
+                        state.recognition.interimResults = false;
+                        state.recognition.lang = state.userProfile.preferredLanguage;
+
+                        state.recognition.onstart = () => {
+                            state.isListening = true;
+                            elements.chatbotVoice.classList.add('listening');
+                        };
+
+                        state.recognition.onend = () => {
+                            state.isListening = false;
+                            elements.chatbotVoice.classList.remove('listening');
+                        };
+
+                        state.recognition.onresult = (event) => {
+                            const transcript = event.results[0][0].transcript;
+                            elements.chatbotInput.value = transcript;
+                            sendMessage();
+                        };
+
+                        state.recognition.onerror = (event) => {
+                            console.error('Speech recognition error:', event.error);
+                            showNotification('Voice recognition error: ' + event.error, 'error');
+                            state.isListening = false;
+                            elements.chatbotVoice.classList.remove('listening');
+                        };
+                    } else {
+                        console.warn('Speech recognition not supported in this browser');
+                        elements.chatbotVoice.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error initializing speech recognition:', error);
+                    elements.chatbotVoice.style.display = 'none';
+                }
+            }
+
+            /**
+             * Load user preferences from localStorage
+             */
+            function loadUserPreferences() {
+                const savedPrefs = localStorage.getItem('chatbotPreferences');
+                if (savedPrefs) {
+                    try {
+                        const prefs = JSON.parse(savedPrefs);
+                        state.darkMode = prefs.darkMode || false;
+                        state.ttsEnabled = prefs.ttsEnabled || false;
+                        state.userProfile = {...state.userProfile, ...prefs.userProfile};
+                        
+                        // Apply dark mode if enabled
+                        if (state.darkMode) {
+                            document.body.classList.add('dark-mode');
+                            elements.chatbotWindow.classList.add('dark-mode');
+                            elements.chatbotHeader.classList.add('dark-mode');
+                            elements.chatbotMessages.classList.add('dark-mode');
+                            elements.chatbotInputArea.classList.add('dark-mode');
+                            elements.chatbotThemeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                        }
+                        
+                        // Update TTS toggle icon
+                        if (state.ttsEnabled) {
+                            elements.chatbotTTSToggle.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                        }
+                    } catch (e) {
+                        console.error('Error parsing saved preferences:', e);
+                    }
+                }
+            }
+
+            /**
+             * Save user preferences to localStorage
+             */
+            function saveUserPreferences() {
+                const prefs = {
+                    darkMode: state.darkMode,
+                    ttsEnabled: state.ttsEnabled,
+                    userProfile: state.userProfile
+                };
+                localStorage.setItem('chatbotPreferences', JSON.stringify(prefs));
+            }
+
+            // ========== CHAT FUNCTIONS ========== //
+
+            /**
+             * Toggle the chatbot window visibility
+             */
+            function toggleChatbotWindow() {
+                elements.chatbotToggle.classList.toggle('active');
+                
+                if (elements.chatbotWindow.classList.contains('visible')) {
+                    elements.chatbotWindow.classList.remove('visible');
+                    // Reset to chat interface when closing
+                    showChatInterface();
+                } else {
+                    elements.chatbotWindow.classList.add('visible');
+                    // Show introduction if this is the first interaction
+                    if (!state.hasShownIntroduction) {
+                        scheduleIntroduction();
+                    }
+                }
+            }
+
+            /**
+             * Schedule the introduction message with a slight delay
+             */
+            function scheduleIntroduction() {
+                setTimeout(() => {
+                    if (!state.hasShownIntroduction && elements.chatbotWindow.classList.contains('visible')) {
+                        showIntroduction();
+                        state.hasShownIntroduction = true;
+                    }
+                }, state.constants.INTRODUCTION_DELAY);
+            }
+
+            /**
+             * Show the chatbot introduction message
+             */
+            function showIntroduction() {
+                const greeting = getRandomResponse(config.responses.greetings);
+                addMessageToChat('AI', greeting, false);
+                
+                // Add some quick topic suggestions
+                setTimeout(() => {
+                    showTopicSuggestions();
+                }, 1000);
+            }
+
+            /**
+             * Show topic suggestions in the chat
+             */
+            function showTopicSuggestions() {
+                const topics = Object.keys(knowledgeBase);
+                const shuffled = topics.sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, state.constants.MAX_TOPIC_SUGGESTIONS);
+                
+                let html = '<div class="topic-suggestions">';
+                selected.forEach(topic => {
+                    const displayName = topic.charAt(0).toUpperCase() + topic.slice(1);
+                    html += `<div class="topic-chip" onclick="handleTopicSuggestion('${topic}')">${displayName}</div>`;
+                });
+                html += '</div>';
+                
+                addMessageToChat('AI', 'Try asking about:', false, html);
+            }
+
+            /**
+             * Handle a topic suggestion click
+             * @param {string} topic - The suggested topic
+             */
+            window.handleTopicSuggestion = function(topic) {
+                elements.chatbotInput.value = `Tell me about ${topic}`;
+                sendMessage();
+            };
+
+            /**
+             * Send a message from the user
+             */
+            function sendMessage() {
+                const message = elements.chatbotInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessageToChat('You', message, true);
+                
+                // Update conversation history
+                state.conversationHistory.push({ role: 'user', content: message });
+                if (state.conversationHistory.length > state.constants.MAX_HISTORY_LENGTH) {
+                    state.conversationHistory.shift();
+                }
+                
+                // Clear input
+                elements.chatbotInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Process message after a short delay
+                setTimeout(() => {
+                    processUserMessage(message);
+                }, 500);
+            }
+
+            /**
+             * Process the user's message and generate a response
+             * @param {string} message - The user's message
+             */
+            function processUserMessage(message) {
+                // Update user interaction count
+                state.userProfile.interactionCount++;
+                
+                // Check for special patterns first
+                if (config.nlp.greetingPatterns.test(message)) {
+                    handleGreeting();
+                    return;
+                }
+                
+                if (config.nlp.thanksPatterns.test(message)) {
+                    handleThanks();
+                    return;
+                }
+                
+                if (config.nlp.callPatterns.test(message)) {
+                    handleCallRequest();
+                    return;
+                }
+                
+                if (config.nlp.formPatterns.test(message)) {
+                    handleFormRequest();
+                    return;
+                }
+                
+                // Analyze the message for topic
+                const topic = detectTopic(message);
+                if (topic) {
+                    state.currentTopic = topic;
+                    provideTopicInformation(topic, message);
+                } else {
+                    // If no specific topic detected, use general response
+                    provideGeneralResponse(message);
+                }
+            }
+
+            /**
+             * Detect the topic from the user's message
+             * @param {string} message - The user's message
+             * @returns {string|null} The detected topic or null
+             */
+            function detectTopic(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                // Check knowledge base topics
+                for (const topic in knowledgeBase) {
+                    if (knowledgeBase[topic].keywords.some(keyword => 
+                        lowerMessage.includes(keyword.toLowerCase())
+                    ) {
+                        return topic;
+                    }
+                }
+                
+                // Check for explanation requests
+                if (config.nlp.explanationRequests.test(lowerMessage)) {
+                    const matches = lowerMessage.match(/explain|tell me about|what is|how does|define (.+)/i);
+                    if (matches && matches[1]) {
+                        const requestedTopic = matches[1].trim();
+                        for (const topic in knowledgeBase) {
+                            if (requestedTopic.toLowerCase().includes(topic)) {
+                                return topic;
+                            }
+                        }
+                        return requestedTopic; // Return even if not in knowledge base
+                    }
+                }
+                
+                return null;
+            }
+
+            /**
+             * Provide information about a specific topic
+             * @param {string} topic - The topic to explain
+             * @param {string} originalMessage - The user's original message
+             */
+            function provideTopicInformation(topic, originalMessage) {
+                // Check if we have this topic in our knowledge base
+                if (knowledgeBase[topic]) {
+                    const topicInfo = knowledgeBase[topic];
+                    
+                    // Check if this is an explanation request
+                    if (config.nlp.explanationRequests.test(originalMessage)) {
+                        // Provide detailed explanation
+                        let response = `**${topicInfo.definition}**\n\n${topicInfo.explanation}`;
+                        
+                        // Add examples if available
+                        if (topicInfo.examples && topicInfo.examples.length > 0) {
+                            response += `\n\n**Examples:**\n- ${topicInfo.examples.join('\n- ')}`;
+                        }
+                        
+                        // Add fun facts if available
+                        if (topicInfo.funFacts && topicInfo.funFacts.length > 0) {
+                            response += `\n\n**Did you know?**\n- ${topicInfo.funFacts.join('\n- ')}`;
+                        }
+                        
+                        addMessageToChat('AI', response, false);
+                    } else {
+                        // Provide concise definition
+                        addMessageToChat('AI', topicInfo.definition, false);
+                    }
+                    
+                    // Update user's preferred topics
+                    if (!state.userProfile.preferredTopics.includes(topic)) {
+                        state.userProfile.preferredTopics.push(topic);
+                        if (state.userProfile.preferredTopics.length > 5) {
+                            state.userProfile.preferredTopics.shift();
+                        }
+                    }
+                    
+                    // Suggest related topics
+                    setTimeout(() => {
+                        if (topicInfo.related && topicInfo.related.length > 0) {
+                            const relatedTopic = topicInfo.related[0];
+                            const transition = getRandomResponse(config.responses.topicTransitions);
+                            addMessageToChat('AI', `${transition} **${relatedTopic}**`, false);
+                        }
+                    }, 1000);
+                } else {
+                    // Topic not in our knowledge base - use Jotform AI API or Wikipedia
+                    fetchInformationFromExternalSources(topic, originalMessage);
+                }
+            }
+
+            /**
+             * Provide a general response when no specific topic is detected
+             * @param {string} message - The user's message
+             */
+            function provideGeneralResponse(message) {
+                // Check for confusion patterns
+                if (config.nlp.confusionPatterns.test(message)) {
+                    const response = getRandomResponse(config.responses.confusionHelp);
+                    addMessageToChat('AI', response, false);
+                    return;
+                }
+                
+                // Check for curiosity patterns
+                if (config.nlp.curiosityPatterns.test(message)) {
+                    addMessageToChat('AI', "I'm glad you find this fascinating! Would you like me to go deeper into this topic?", false);
+                    return;
+                }
+                
+                // Check for help patterns
+                if (config.nlp.helpPatterns.test(message)) {
+                    addMessageToChat('AI', "I can help explain scientific concepts, provide interesting facts, or connect you with experts. What would you like to know?", false);
+                    return;
+                }
+                
+                // Default response - use Jotform AI API for more sophisticated responses
+                fetchAIResponse(message);
+            }
+
+            /**
+             * Fetch information from external APIs (Wikipedia, NASA, etc.)
+             * @param {string} topic - The topic to research
+             * @param {string} originalMessage - The user's original message
+             */
+            function fetchInformationFromExternalSources(topic, originalMessage) {
+                // First try Wikipedia
+                fetch(`${config.apis.wikipedia.endpoint}${encodeURIComponent(topic)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.extract) {
+                            let response = `From Wikipedia: ${data.extract}`;
+                            if (data.content_urls && data.content_urls.desktop) {
+                                response += `\n\n[Read more](${data.content_urls.desktop.page})`;
+                            }
+                            addMessageToChat('AI', response, false);
+                        } else {
+                            throw new Error('No extract available');
+                        }
+                    })
+                    .catch(() => {
+                        // Wikipedia failed, try Jotform AI API
+                        fetchAIResponse(originalMessage);
+                    });
+            }
+
+            /**
+             * Fetch a response from the Jotform AI API
+             * @param {string} message - The user's message
+             */
+            function fetchAIResponse(message) {
+                // In a real implementation, this would call the Jotform AI API
+                // For demo purposes, we'll simulate a response
+                
+                const loadingMessages = [
+                    "Let me research that for you...",
+                    "Consulting my knowledge sources...",
+                    "Searching for the best explanation..."
+                ];
+                
+                const loadingMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+                addMessageToChat('AI', loadingMessage, false);
+                
+                // Simulate API delay
+                setTimeout(() => {
+                    // This would be the actual API call in production:
+                    /*
+                    fetch(config.apis.jotformAI.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${config.apis.jotformAI.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-3.5-turbo",
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "You are a science educator assistant. Provide clear, accurate explanations of scientific concepts at an appropriate level for the user."
+                                },
+                                ...state.conversationHistory,
+                                {
+                                    role: "user",
+                                    content: message
+                                }
+                            ],
+                            temperature: 0.7,
+                            max_tokens: 500
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const aiResponse = data.choices[0].message.content;
+                        addMessageToChat('AI', aiResponse, false);
+                    })
+                    .catch(error => {
+                        console.error('AI API error:', error);
+                        addMessageToChat('AI', config.responses.errorResponses.api, false);
+                    });
+                    */
+                    
+                    // Simulated response for demo
+                    const simulatedResponses = [
+                        `I found some information about "${message}". In scientific terms, this relates to a fascinating area of study that combines multiple disciplines. Would you like me to go into more detail?`,
+                        `Based on my research, "${message}" is an interesting topic that scientists have been studying. The key concepts involve...`,
+                        `"${message}" touches on several important scientific principles. The most relevant aspects are...`
+                    ];
+                    
+                    const response = simulatedResponses[Math.floor(Math.random() * simulatedResponses.length)];
+                    addMessageToChat('AI', response, false);
+                }, 2000);
+            }
+
+            /**
+             * Handle greeting messages
+             */
+            function handleGreeting() {
+                const response = getRandomResponse(config.responses.greetings);
+                addMessageToChat('AI', response, false);
+                showTopicSuggestions();
+            }
+
+            /**
+             * Handle thank you messages
+             */
+            function handleThanks() {
+                const response = getRandomResponse(config.responses.thanks);
+                addMessageToChat('AI', response, false);
+            }
+
+            /**
+             * Handle call requests
+             */
+            function handleCallRequest() {
+                const response = getRandomResponse(config.responses.callResponses);
+                addMessageToChat('AI', response, false);
+                
+                // Add quick confirm/cancel buttons
+                setTimeout(() => {
+                    const html = `
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button onclick="startCall()" style="padding: 8px 16px; background-color: var(--success-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;">
+                                <i class="fas fa-phone"></i> Start Call
+                            </button>
+                            <button onclick="addMessageToChat('AI', 'No problem! Let me know if you change your mind.', false)" style="padding: 8px 16px; background-color: var(--danger-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    `;
+                    addMessageToChat('AI', '', false, html);
+                }, 500);
+            }
+
+            /**
+             * Start a voice/video call
+             */
+            window.startCall = async function() {
+                try {
+                    // Request media devices
+                    state.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                        video: true
+                    });
+                    
+                    // Show local video
+                    elements.localVideo.srcObject = state.localStream;
+                    
+                    // Add tracks to peer connection
+                    state.localStream.getTracks().forEach(track => {
+                        state.peerConnection.addTrack(track, state.localStream);
+                    });
+                    
+                    // Create offer
+                    const offer = await state.peerConnection.createOffer();
+                    await state.peerConnection.setLocalDescription(offer);
+                    
+                    // In a real app, you would send the offer to the remote peer via signaling server
+                    console.log('Call offer created:', offer);
+                    
+                    // Show call interface
+                    toggleCallInterface();
+                    elements.callStatus.textContent = 'Calling expert...';
+                    state.callActive = true;
+                    
+                    // Simulate call being answered after 3 seconds
+                    setTimeout(() => {
+                        if (state.callActive) {
+                            elements.callStatus.textContent = 'Connected to Science Expert';
+                            simulateIncomingCallData();
+                        }
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('Error starting call:', error);
+                    showNotification(config.responses.errorResponses.call, 'error');
+                    addMessageToChat('AI', config.responses.errorResponses.call, false);
+                }
+            };
+
+            /**
+             * Simulate incoming call data (for demo purposes)
+             */
+            function simulateIncomingCallData() {
+                // Simulate receiving messages during call
+                const expertMessages = [
+                    "Hello! I'm Dr. Smith, a physics researcher. How can I help you today?",
+                    "That's an excellent question about " + (state.currentTopic || "science") + ".",
+                    "Let me explain that in more detail...",
+                    "Would you like me to go deeper into any particular aspect?"
+                ];
+                
+                let messageIndex = 0;
+                const messageInterval = setInterval(() => {
+                    if (messageIndex < expertMessages.length && state.callActive) {
+                        // Simulate receiving message via data channel
+                        if (state.dataChannel && state.dataChannel.readyState === 'open') {
+                            // In real app, this would come from the remote peer
+                            const message = expertMessages[messageIndex];
+                            addMessageToChat('Expert', message, false);
+                            messageIndex++;
+                        }
+                    } else {
+                        clearInterval(messageInterval);
+                    }
+                }, 8000);
+            }
+
+            /**
+             * Handle form requests
+             */
+            function handleFormRequest() {
+                const response = getRandomResponse(config.responses.formResponses);
+                addMessageToChat('AI', response, false);
+                toggleFormInterface();
+            }
+
+            /**
+             * Toggle the call interface
+             */
+            function toggleCallInterface() {
+                if (elements.callContainer.classList.contains('active')) {
+                    elements.callContainer.classList.remove('active');
+                    showChatInterface();
+                } else {
+                    // Hide other interfaces
+                    elements.formContainer.classList.remove('active');
+                    
+                    // Show call interface
+                    elements.callContainer.classList.add('active');
+                    elements.chatbotMessages.style.display = 'none';
+                    elements.chatbotInputArea.style.display = 'none';
+                }
+            }
+
+            /**
+             * Toggle the form interface
+             */
+            function toggleFormInterface() {
+                if (elements.formContainer.classList.contains('active')) {
+                    elements.formContainer.classList.remove('active');
+                    showChatInterface();
+                } else {
+                    // Hide other interfaces
+                    elements.callContainer.classList.remove('active');
+                    
+                    // Show form interface
+                    elements.formContainer.classList.add('active');
+                    elements.chatbotMessages.style.display = 'none';
+                    elements.chatbotInputArea.style.display = 'none';
+                }
+            }
+
+            /**
+             * Show the chat interface (hides other interfaces)
+             */
+            function showChatInterface() {
+                elements.callContainer.classList.remove('active');
+                elements.formContainer.classList.remove('active');
+                elements.chatbotMessages.style.display = 'flex';
+                elements.chatbotInputArea.style.display = 'flex';
+                
+                // Scroll to bottom
+                elements.chatbotMessages.scrollTop = elements.chatbotMessages.scrollHeight;
+            }
+
+            /**
+             * Toggle voice recognition
+             */
+            function toggleVoiceRecognition() {
+                if (!state.recognition) {
+                    showNotification('Voice recognition not supported in your browser', 'error');
+                    return;
+                }
+                
+                if (state.isListening) {
+                    state.recognition.stop();
+                } else {
+                    state.recognition.start();
+                }
+            }
+
+            /**
+             * Toggle dark mode
+             */
+            function toggleDarkMode() {
+                state.darkMode = !state.darkMode;
+                
+                // Toggle dark mode classes
+                document.body.classList.toggle('dark-mode');
+                elements.chatbotWindow.classList.toggle('dark-mode');
+                elements.chatbotHeader.classList.toggle('dark-mode');
+                elements.chatbotMessages.classList.toggle('dark-mode');
+                elements.chatbotInputArea.classList.toggle('dark-mode');
+                elements.callContainer.classList.toggle('dark-mode');
+                elements.formContainer.classList.toggle('dark-mode');
+                
+                // Update icon
+                if (state.darkMode) {
+                    elements.chatbotThemeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                } else {
+                    elements.chatbotThemeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                }
+                
+                // Save preference
+                saveUserPreferences();
+            }
+
+            /**
+             * Toggle text-to-speech
+             */
+            function toggleTTS() {
+                state.ttsEnabled = !state.ttsEnabled;
+                
+                // Update icon
+                if (state.ttsEnabled) {
+                    elements.chatbotTTSToggle.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                    // Speak current message if any
+                    const lastMessage = elements.chatbotMessages.lastElementChild;
+                    if (lastMessage && lastMessage.classList.contains('bot-message')) {
+                        const text = lastMessage.textContent || lastMessage.innerText;
+                        speak(text);
+                    }
+                } else {
+                    elements.chatbotTTSToggle.innerHTML = '<i class="fas fa-volume-up"></i>';
+                    // Stop any current speech
+                    window.speechSynthesis.cancel();
+                }
+                
+                // Save preference
+                saveUserPreferences();
+            }
+
+            /**
+             * Use text-to-speech to speak a message
+             * @param {string} text - The text to speak
+             */
+            function speak(text) {
+                if (!state.ttsEnabled) return;
+                
+                // Clean up text (remove markdown syntax, etc.)
+                const cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1')
+                                      .replace(/\*(.*?)\*/g, '$1')
+                                      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+                                      .replace(/\n/g, ' ');
+                
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = state.userProfile.preferredLanguage;
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            }
+
+            /**
+             * Toggle mute during call
+             */
+            function toggleMute() {
+                state.isMuted = !state.isMuted;
+                
+                if (state.localStream) {
+                    const audioTracks = state.localStream.getAudioTracks();
+                    audioTracks.forEach(track => {
+                        track.enabled = !state.isMuted;
+                    });
+                }
+                
+                // Update button appearance
+                if (state.isMuted) {
+                    elements.callMute.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                    elements.callMute.style.backgroundColor = var(--danger-color);
+                } else {
+                    elements.callMute.innerHTML = '<i class="fas fa-microphone"></i>';
+                    elements.callMute.style.backgroundColor = var(--secondary-color);
+                }
+            }
+
+            /**
+             * Toggle video during call
+             */
+            function toggleVideo() {
+                state.isVideoOff = !state.isVideoOff;
+                
+                if (state.localStream) {
+                    const videoTracks = state.localStream.getVideoTracks();
+                    videoTracks.forEach(track => {
+                        track.enabled = !state.isVideoOff;
+                    });
+                }
+                
+                // Update button appearance
+                if (state.isVideoOff) {
+                    elements.callVideoToggle.innerHTML = '<i class="fas fa-video-slash"></i>';
+                    elements.callVideoToggle.style.backgroundColor = var(--danger-color);
+                } else {
+                    elements.callVideoToggle.innerHTML = '<i class="fas fa-video"></i>';
+                    elements.callVideoToggle.style.backgroundColor = var(--secondary-color);
+                }
+            }
+
+            /**
+             * End the current call
+             */
+            function endCall() {
+                if (state.localStream) {
+                    state.localStream.getTracks().forEach(track => track.stop());
+                    state.localStream = null;
+                }
+                
+                if (state.peerConnection) {
+                    state.peerConnection.close();
+                    state.peerConnection = null;
+                }
+                
+                // Reset call state
+                state.callActive = false;
+                state.isMuted = false;
+                state.isVideoOff = false;
+                
+                // Clear video elements
+                elements.remoteVideo.srcObject = null;
+                elements.localVideo.srcObject = null;
+                
+                // Show chat interface
+                showChatInterface();
+                
+                // Add call ended message
+                addMessageToChat('AI', 'Call ended. Did that help answer your questions?', false);
+            }
+
+            /**
+             * Handle form submission
+             * @param {Event} e - The form submission event
+             */
+            function handleFormSubmission(e) {
+                e.preventDefault();
+                
+                // Get form data
+                const formData = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    subject: document.getElementById('subject').value,
+                    message: document.getElementById('message').value,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // In a real app, you would send this to your backend or JotForm
+                console.log('Form submitted:', formData);
+                
+                // Simulate form submission
+                setTimeout(() => {
+                    showNotification('Thank you for your feedback! We\'ll get back to you soon.', 'success');
+                    toggleFormInterface();
+                    addMessageToChat('AI', 'Thanks for your feedback! Is there anything else I can help with?', false);
+                    
+                    // Clear form
+                    elements.feedbackForm.reset();
+                }, 1000);
+            }
+
+            // ========== UI UTILITIES ========== //
+
+            /**
+             * Add a message to the chat
+             * @param {string} sender - The sender ('You' or 'AI')
+             * @param {string} message - The message text
+             * @param {boolean} isUser - Whether the sender is the user
+             * @param {string} html - Optional HTML content to append
+             */
+            function addMessageToChat(sender, message, isUser, html = '') {
+                // Remove typing indicator if present
+                const typingIndicator = elements.chatbotMessages.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                
+                // Create message element
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', isUser ? 'user-message' : 'bot-message');
+                messageDiv.classList.add('fade-in');
+                
+                // Format message with simple markdown support
+                let formattedMessage = message
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                    .replace(/\n/g, '<br>');
+                
+                // Add timestamp
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                // Set message content
+                messageDiv.innerHTML = `
+                    ${formattedMessage}
+                    ${html}
+                    <span class="message-time">${timeString}</span>
+                `;
+                
+                // Add to chat
+                elements.chatbotMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                elements.chatbotMessages.scrollTop = elements.chatbotMessages.scrollHeight;
+                
+                // Speak the message if TTS is enabled and it's a bot message
+                if (!isUser && state.ttsEnabled) {
+                    speak(message);
+                }
+            }
+
+            /**
+             * Show typing indicator
+             */
+            function showTypingIndicator() {
+                // Remove existing typing indicator if present
+                const existingIndicator = elements.chatbotMessages.querySelector('.typing-indicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                // Create new typing indicator
+                const typingDiv = document.createElement('div');
+                typingDiv.classList.add('typing-indicator');
+                typingDiv.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                
+                // Add to chat
+                elements.chatbotMessages.appendChild(typingDiv);
+                
+                // Scroll to bottom
+                elements.chatbotMessages.scrollTop = elements.chatbotMessages.scrollHeight;
+            }
+
+            /**
+             * Show a notification
+             * @param {string} message - The notification message
+             * @param {string} type - The notification type ('success', 'error', 'warning')
+             */
+            function showNotification(message, type = 'success') {
+                // Update notification content
+                elements.notificationMessage.textContent = message;
+                elements.notification.className = 'notification';
+                elements.notification.classList.add(type);
+                
+                // Update icon based on type
+                const icon = elements.notification.querySelector('i');
+                if (type === 'error') {
+                    icon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    icon.className = 'fas fa-exclamation-triangle';
+                } else {
+                    icon.className = 'fas fa-check-circle';
+                }
+                
+                // Show notification
+                elements.notification.classList.add('show');
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    elements.notification.classList.remove('show');
+                }, 5000);
+            }
+
+            /**
+             * Get a random response from an array of possible responses
+             * @param {array} responses - Array of possible responses
+             * @returns {string} A random response
+             */
+            function getRandomResponse(responses) {
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            // ========== INITIALIZATION ========== //
+            initChatbot();
+        });
+    </script>
+</body>
+</html>
