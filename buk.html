@@ -3,64 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="BUK - An exciting game by 6124224">
-    <title>BUK Game</title>
+    <title>BUK - Open World Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Fallback styles in case the external CSS fails to load */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #222;
-            color: white;
-        }
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .loading-message {
-            font-size: 24px;
-        }
-    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div class="loading-message">Loading BUK Game...</div>
+    <div id="gameContainer">
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-title">BUK</div>
+            <div class="loading-bar">
+                <div class="loading-fill" id="loadingFill"></div>
+            </div>
+            <div>Loading the mystical world...</div>
+        </div>
+        
+        <div id="ui">
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill" style="width: 100%"></div>
+            </div>
+            
+            <div class="minimap" id="minimap"></div>
+            
+            <div class="inventory" id="inventory">
+                <div>⚔️ Ancient Sword</div>
+                <div>🛡️ Leather Armor</div>
+                <div>🧪 Health Potions: <span id="potionCount">3</span></div>
+            </div>
+            
+            <div class="quest-log" id="questLog">
+                <div style="color: #4a90e2; font-weight: bold;">Current Quest:</div>
+                <div id="currentQuest">Explore the Ancient Ruins and discover the lost artifact.</div>
+            </div>
+            
+            <div class="controls">
+                <strong>Controls:</strong><br>
+                WASD - Move<br>
+                Mouse - Look around<br>
+                Click - Attack<br>
+                E - Interact<br>
+                Space - Jump<br>
+                P - Use Potion
+            </div>
+            
+            <div class="crosshair"></div>
+        </div>
+        
+        <div id="storyModal" class="story-modal" style="display: none;">
+            <div class="story-title" id="storyTitle">Welcome to BUK</div>
+            <div class="story-text" id="storyText">
+                In a world where ancient magic and forgotten technologies intertwine, 
+                you are the last Guardian of the Crystal Realm. The Shadow Legion has 
+                awakened, threatening to consume all light from the world. Your quest 
+                begins in the mystical Forest of Echoes...
+            </div>
+            <button class="continue-btn" onclick="closeStoryModal()">Begin Adventure</button>
+        </div>
     </div>
 
-    <!-- Game UI Elements -->
-    <div id="ui-elements" style="display: none;">
-        <div id="score-display">Score: 0</div>
-        <div id="lives-display">Lives: 3</div>
-        <div id="game-over" class="hidden">
-            <h2>Game Over</h2>
-            <p>Final Score: <span id="final-score">0</span></p>
-            <button id="restart-button">Play Again</button>
-        </div>
-        <div id="start-screen">
-            <h1>BUK</h1>
-            <button id="start-button">Start Game</button>
-        </div>
-    </div>
-
-    <!-- JavaScript Files -->
     <script src="app.js"></script>
-    
-    <!-- Fallback loading -->
-    <script>
-        // Check if game loaded properly
-        setTimeout(function() {
-            if (typeof gameInitialized === 'undefined') {
-                document.querySelector('.loading-message').innerHTML = 
-                    'Game is taking longer than expected to load.<br>' +
-                    'If it doesn\'t start soon, please check your connection ' +
-                    'or refresh the page.';
-            }
-        }, 5000);
-    </script>
 </body>
 </html>
