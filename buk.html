@@ -8,55 +8,265 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Main Game Container -->
     <div id="gameContainer">
+        <!-- Loading Screen -->
         <div id="loadingScreen" class="loading-screen">
             <div class="loading-title">BUK</div>
-            <div class="loading-bar">
-                <div class="loading-fill" id="loadingFill"></div>
+            <div class="loading-subtitle">Open World Adventure</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
             </div>
-            <div>Loading the mystical world...</div>
+            <div class="loading-text" id="loadingText">Initializing mystical world...</div>
         </div>
-        
-        <div id="ui">
-            <div class="health-bar">
-                <div class="health-fill" id="healthFill" style="width: 100%"></div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="main-menu" style="display: none;">
+            <div class="main-menu-title">BUK</div>
+            <div class="main-menu-subtitle">The Crystal Realm Awaits</div>
+            <div class="menu-buttons">
+                <button class="menu-button" id="newGameBtn">New Game</button>
+                <button class="menu-button" id="loadGameBtn">Load Game</button>
+                <button class="menu-button" id="settingsBtn">Settings</button>
+                <button class="menu-button" id="creditsBtn">Credits</button>
             </div>
-            
-            <div class="minimap" id="minimap"></div>
-            
-            <div class="inventory" id="inventory">
-                <div>⚔️ Ancient Sword</div>
-                <div>🛡️ Leather Armor</div>
-                <div>🧪 Health Potions: <span id="potionCount">3</span></div>
+        </div>
+
+        <!-- Game UI -->
+        <div id="gameUI" class="game-ui" style="display: none;">
+            <!-- Health, Stamina, and Mana Bars -->
+            <div class="hud-container">
+                <div class="status-bars">
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthFill"></div>
+                        <div class="hud-text">Health</div>
+                    </div>
+                    <div class="stamina-bar">
+                        <div class="stamina-fill" id="staminaFill"></div>
+                        <div class="hud-text">Stamina</div>
+                    </div>
+                    <div class="mana-bar">
+                        <div class="mana-fill" id="manaFill"></div>
+                        <div class="hud-text">Mana</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <div class="action-slot" id="slot1">⚔️</div>
+                    <div class="action-slot" id="slot2">🛡️</div>
+                    <div class="action-slot" id="slot3">🧪</div>
+                    <div class="action-slot" id="slot4">🏹</div>
+                </div>
             </div>
-            
-            <div class="quest-log" id="questLog">
-                <div style="color: #4a90e2; font-weight: bold;">Current Quest:</div>
-                <div id="currentQuest">Explore the Ancient Ruins and discover the lost artifact.</div>
+
+            <!-- Minimap -->
+            <div class="minimap" id="minimap">
+                <canvas id="minimapCanvas" width="200" height="200"></canvas>
             </div>
-            
-            <div class="controls">
-                <strong>Controls:</strong><br>
-                WASD - Move<br>
-                Mouse - Look around<br>
-                Click - Attack<br>
-                E - Interact<br>
-                Space - Jump<br>
-                P - Use Potion
-            </div>
-            
+
+            <!-- Notifications -->
+            <div id="notifications" class="notifications"></div>
+
+            <!-- Crosshair -->
             <div class="crosshair"></div>
-        </div>
-        
-        <div id="storyModal" class="story-modal" style="display: none;">
-            <div class="story-title" id="storyTitle">Welcome to BUK</div>
-            <div class="story-text" id="storyText">
-                In a world where ancient magic and forgotten technologies intertwine, 
-                you are the last Guardian of the Crystal Realm. The Shadow Legion has 
-                awakened, threatening to consume all light from the world. Your quest 
-                begins in the mystical Forest of Echoes...
+
+            <!-- Control Help -->
+            <div class="controls-help" id="controlsHelp">
+                <div class="controls-title">Controls</div>
+                <div class="controls-list">
+                    <div><kbd>W A S D</kbd> Move</div>
+                    <div><kbd>Mouse</kbd> Look</div>
+                    <div><kbd>Click</kbd> Attack</div>
+                    <div><kbd>E</kbd> Interact</div>
+                    <div><kbd>Space</kbd> Jump</div>
+                    <div><kbd>Shift</kbd> Run</div>
+                    <div><kbd>Tab</kbd> Inventory</div>
+                    <div><kbd>M</kbd> Map</div>
+                    <div><kbd>Esc</kbd> Menu</div>
+                </div>
             </div>
-            <button class="continue-btn" onclick="closeStoryModal()">Begin Adventure</button>
+        </div>
+
+        <!-- Inventory Window -->
+        <div id="inventoryWindow" class="inventory-window">
+            <div class="inventory-title">Inventory</div>
+            <div class="inventory-content">
+                <div class="inventory-grid" id="inventoryGrid">
+                    <!-- Inventory slots will be generated by JavaScript -->
+                </div>
+                <div class="inventory-stats">
+                    <div class="stat-line">Capacity: <span id="inventoryCapacity">25/50</span></div>
+                    <div class="stat-line">Weight: <span id="inventoryWeight">12.5 kg</span></div>
+                </div>
+            </div>
+            <button class="close-btn" id="closeInventory">Close</button>
+        </div>
+
+        <!-- Quest Log -->
+        <div id="questLog" class="quest-log">
+            <div class="quest-log-title">Quest Journal</div>
+            <div class="quest-tabs">
+                <button class="quest-tab active" data-tab="active">Active</button>
+                <button class="quest-tab" data-tab="completed">Completed</button>
+                <button class="quest-tab" data-tab="failed">Failed</button>
+            </div>
+            <div class="quest-list" id="questList">
+                <!-- Quest items will be populated by JavaScript -->
+            </div>
+            <button class="close-btn" id="closeQuests">Close</button>
+        </div>
+
+        <!-- Settings Menu -->
+        <div id="settingsMenu" class="settings-menu">
+            <div class="settings-title">Settings</div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <label class="settings-label">Graphics Quality</label>
+                    <select class="settings-select" id="graphicsQuality">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="ultra">Ultra</option>
+                    </select>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">Master Volume</label>
+                    <input type="range" class="settings-slider" id="masterVolume" min="0" max="100" value="80">
+                    <span class="slider-value">80%</span>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">Music Volume</label>
+                    <input type="range" class="settings-slider" id="musicVolume" min="0" max="100" value="60">
+                    <span class="slider-value">60%</span>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">SFX Volume</label>
+                    <input type="range" class="settings-slider" id="sfxVolume" min="0" max="100" value="70">
+                    <span class="slider-value">70%</span>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">Mouse Sensitivity</label>
+                    <input type="range" class="settings-slider" id="mouseSensitivity" min="0.1" max="2.0" step="0.1" value="1.0">
+                    <span class="slider-value">1.0</span>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">
+                        <input type="checkbox" id="showFPS"> Show FPS Counter
+                    </label>
+                </div>
+                
+                <div class="settings-section">
+                    <label class="settings-label">
+                        <input type="checkbox" id="fullscreen"> Fullscreen Mode
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-buttons">
+                <button class="menu-button" id="applySettings">Apply</button>
+                <button class="menu-button" id="resetSettings">Reset</button>
+                <button class="menu-button" id="closeSettings">Close</button>
+            </div>
+        </div>
+
+        <!-- Character Creation -->
+        <div id="characterCreation" class="character-creation" style="display: none;">
+            <div class="character-creation-title">Create Your Guardian</div>
+            <div class="character-options">
+                <div class="character-preview">
+                    <div id="characterModel">Character Preview</div>
+                </div>
+                <div class="character-selection">
+                    <div class="character-section">
+                        <h3>Class</h3>
+                        <div class="character-option active" data-class="warrior">
+                            <strong>Warrior</strong><br>
+                            Melee combat specialist
+                        </div>
+                        <div class="character-option" data-class="mage">
+                            <strong>Mage</strong><br>
+                            Master of arcane arts
+                        </div>
+                        <div class="character-option" data-class="archer">
+                            <strong>Archer</strong><br>
+                            Ranged combat expert
+                        </div>
+                        <div class="character-option" data-class="rogue">
+                            <strong>Rogue</strong><br>
+                            Stealth and agility
+                        </div>
+                    </div>
+                    
+                    <div class="character-section">
+                        <h3>Name</h3>
+                        <input type="text" id="characterName" placeholder="Enter character name" maxlength="20">
+                    </div>
+                </div>
+            </div>
+            <div class="character-confirm">
+                <button class="menu-button" id="confirmCharacter">Begin Adventure</button>
+                <button class="menu-button" id="cancelCharacter">Back</button>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="pause-menu">
+            <div class="pause-title">Game Paused</div>
+            <div class="menu-buttons">
+                <button class="menu-button" id="resumeGame">Resume</button>
+                <button class="menu-button" id="saveGame">Save Game</button>
+                <button class="menu-button" id="pauseSettings">Settings</button>
+                <button class="menu-button" id="mainMenuBtn">Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Death Screen -->
+        <div id="deathScreen" class="death-screen" style="display: none;">
+            <div class="death-title">You Have Fallen</div>
+            <div class="death-message">The darkness has claimed another guardian...</div>
+            <div class="death-stats">
+                <div>Time Survived: <span id="timeSurvived">--:--</span></div>
+                <div>Enemies Defeated: <span id="enemiesDefeated">0</span></div>
+                <div>Experience Gained: <span id="expGained">0</span></div>
+            </div>
+            <div class="menu-buttons">
+                <button class="menu-button" id="respawnBtn">Respawn</button>
+                <button class="menu-button" id="loadLastSave">Load Last Save</button>
+                <button class="menu-button" id="deathMainMenu">Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Story Modal -->
+        <div id="storyModal" class="story-modal" style="display: none;">
+            <div class="story-content">
+                <div class="story-title" id="storyTitle">The Crystal Realm</div>
+                <div class="story-text" id="storyText">
+                    In the realm where ancient magic flows through crystalline veins beneath the earth,
+                    darkness stirs once more. The Shadow Legion, banished centuries ago, has found a way
+                    to breach the dimensional barriers. As the last Guardian of the Crystal Realm,
+                    you must gather the scattered fragments of the Eternal Crystal and restore
+                    the protective ward that keeps the shadows at bay.
+                    
+                    Your journey begins in the Whispering Woods, where the first fragment
+                    is said to rest within the ruins of the ancient temple...
+                </div>
+                <button class="continue-btn" id="continueStory">Continue</button>
+            </div>
+        </div>
+
+        <!-- Debug Overlay -->
+        <div id="debugOverlay" class="debug-overlay">
+            <div>FPS: <span id="fpsCounter">60</span></div>
+            <div>Position: <span id="playerPosition">0, 0, 0</span></div>
+            <div>Health: <span id="debugHealth">100</span></div>
+            <div>Enemies: <span id="enemyCount">0</span></div>
+            <div>Memory: <span id="memoryUsage">0 MB</span></div>
         </div>
     </div>
 
