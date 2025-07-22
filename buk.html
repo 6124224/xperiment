@@ -1,595 +1,802 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BUK – The Ultimate Medieval Japan Adventure</title>
-  <style>
-    /* RESET & LAYOUT */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:sans-serif; }
-    canvas { display:block; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUK - Shadow Fight Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* INTRO & LOADING */
-    #intro, #loading {
-      position:absolute; top:0; left:0; width:100%; height:100%;
-      display:flex; align-items:center; justify-content:center;
-      flex-direction:column; background:#111; color:#eee; z-index:100;
-    }
-    #intro.hidden, #loading.hidden { opacity:0; pointer-events:none; transition:opacity .8s; }
-    #intro h1 {
-      font-size:4rem; text-shadow:0 0 12px rgba(255,255,255,0.8);
-      animation:flicker 2s infinite;
-    }
-    @keyframes flicker {
-      0%,18%,22%,25%,53%,57%,100%{opacity:1;}
-      20%,24%,55%{opacity:0.3;}
-    }
-    #loading p { margin-top:1em; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            overflow: hidden;
+            user-select: none;
+        }
 
-    /* HUD */
-    #hud {
-      position:absolute; bottom:20px; left:20px; z-index:10; pointer-events:none;
-    }
-    #hud .bar { width:200px; height:16px; background:rgba(255,255,255,0.1); margin-bottom:8px; }
-    #hud .fill { height:100%; width:100%; transition:width .2s; }
-    #hud .health .fill { background:#c44; }
-    #hud .honor .fill { background:#4ac; }
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+        }
 
-    /* DIALOGUE */
-    #dialogue {
-      position:absolute; bottom:0; left:50%; transform:translateX(-50%);
-      width:80%; max-width:800px; background:rgba(0,0,0,0.8); color:#fff;
-      padding:15px 20px; font-size:1.1rem; display:none; z-index:10;
-    }
-    #dialogue .speaker { font-weight:bold; margin-bottom:8px; }
-    #dialogue .text { margin-bottom:12px; }
-    #dialogue .choices { display:flex; gap:10px; flex-wrap:wrap; }
-    #dialogue .choice {
-      background:#222; padding:8px 14px; cursor:pointer; border:1px solid #555;
-      transition:background .2s;
-    }
-    #dialogue .choice:hover { background:#444; }
+        .intro-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #000000, #1a1a2e, #000000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: introFade 0.5s ease-in;
+        }
 
-    /* WEATHER OVERLAY */
-    #weatherOverlay {
-      position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;
-      mix-blend-mode:overlay; z-index:50;
-    }
-  </style>
+        .intro-title {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff6b35;
+            text-shadow: 0 0 20px #ff6b35;
+            margin-bottom: 2rem;
+            animation: titlePulse 2s infinite;
+        }
+
+        .intro-subtitle {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+
+        .start-button {
+            padding: 1rem 3rem;
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .start-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.5);
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes introFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .arena {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(180deg, #87CEEB 0%, #4682B4 30%, #2F4F4F 70%, #1C1C1C 100%);
+            overflow: hidden;
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(180deg, #654321 0%, #4a3728 50%, #2d1810 100%);
+            border-top: 5px solid #8B4513;
+        }
+
+        .fighter {
+            position: absolute;
+            bottom: 150px;
+            width: 80px;
+            height: 120px;
+            transition: all 0.1s ease;
+        }
+
+        .kirmada {
+            left: 200px;
+        }
+
+        .baba {
+            right: 200px;
+        }
+
+        /* Character Body Parts */
+        .fighter::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        /* Head */
+        .kirmada::before {
+            background: radial-gradient(circle, #333 20%, #000 80%);
+            border: 2px solid #111;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .baba::before {
+            background: radial-gradient(circle, #3b82f6 20%, #1e40af 80%);
+            border: 2px solid #1d4ed8;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Body */
+        .fighter::after {
+            content: '';
+            position: absolute;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 35px;
+            height: 50px;
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        .kirmada::after {
+            background: linear-gradient(180deg, #1a1a1a 0%, #000 50%, #1a1a1a 100%);
+            border: 2px solid #333;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .baba::after {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #1e3a8a 100%);
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Arms */
+        .fighter .arm-left, .fighter .arm-right {
+            position: absolute;
+            top: 40px;
+            width: 8px;
+            height: 35px;
+            border-radius: 4px;
+            z-index: 1;
+        }
+
+        .fighter .arm-left {
+            left: 15px;
+        }
+
+        .fighter .arm-right {
+            right: 15px;
+        }
+
+        .kirmada .arm-left, .kirmada .arm-right {
+            background: linear-gradient(180deg, #1a1a1a, #000);
+            border: 1px solid #333;
+        }
+
+        .baba .arm-left, .baba .arm-right {
+            background: linear-gradient(180deg, #1e3a8a, #1e40af);
+            border: 1px solid #3b82f6;
+        }
+
+        /* Legs */
+        .fighter .leg-left, .fighter .leg-right {
+            position: absolute;
+            bottom: 0;
+            width: 10px;
+            height: 35px;
+            border-radius: 5px;
+        }
+
+        .fighter .leg-left {
+            left: 20px;
+        }
+
+        .fighter .leg-right {
+            right: 20px;
+        }
+
+        .kirmada .leg-left, .kirmada .leg-right {
+            background: linear-gradient(180deg, #1a1a1a, #000);
+            border: 1px solid #333;
+        }
+
+        .baba .leg-left, .baba .leg-right {
+            background: linear-gradient(180deg, #1e3a8a, #1e40af);
+            border: 1px solid #3b82f6;
+        }
+
+        /* Eyes */
+        .fighter .eye-left, .fighter .eye-right {
+            position: absolute;
+            top: 12px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #ff0000;
+        }
+
+        .fighter .eye-left {
+            left: 35px;
+        }
+
+        .fighter .eye-right {
+            right: 35px;
+        }
+
+        .baba .eye-left, .baba .eye-right {
+            background: #00ffff;
+        }
+
+        .health-bar {
+            position: absolute;
+            top: 30px;
+            width: 300px;
+            height: 25px;
+            background: linear-gradient(90deg, #2d1810, #4a3728);
+            border: 3px solid #8B4513;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .health-bar.left {
+            left: 50px;
+        }
+
+        .health-bar.right {
+            right: 50px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #cc0000, #ff0000);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+            border: 2px solid #ff6b35;
+        }
+
+        .dialogue-box {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #ff6b35;
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 2px solid #ff6b35;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 300px;
+            animation: dialogueAppear 0.5s ease;
+            z-index: 100;
+        }
+
+        @keyframes dialogueAppear {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .attack-effect {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffff00, #ff6600);
+            animation: attackBurst 0.3s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes attackBurst {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .jumping {
+            animation: jumpAnimation 0.6s ease-in-out;
+        }
+
+        @keyframes jumpAnimation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-80px); }
+        }
+
+        .attacking {
+            animation: attackAnimation 0.3s ease-in-out;
+        }
+
+        @keyframes attackAnimation {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(1.2); }
+        }
+
+        .blocking {
+            animation: blockAnimation 0.4s ease-in-out;
+        }
+
+        @keyframes blockAnimation {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ff6b35;
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #ff6b35;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 200;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffff00;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px black;
+            animation: comboFlash 0.5s ease-in-out;
+        }
+
+        @keyframes comboFlash {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.7; transform: translateX(-50%) scale(1.2); }
+        }
+    </style>
 </head>
 <body>
-  <div id="intro">
-    <h1>BUK</h1>
-    <p>Press any key to begin</p>
-  </div>
-  <div id="loading" class="hidden">
-    <p>Generating world…</p>
-  </div>
-  <canvas id="gameCanvas"></canvas>
-  <div id="weatherOverlay"></div>
-  <div id="hud">
-    <div class="bar health"><div class="fill" id="hpFill"></div></div>
-    <div class="bar honor"><div class="fill" id="honorFill"></div></div>
-  </div>
-  <div id="dialogue">
-    <div class="speaker" id="dlgSpeaker"></div>
-    <div class="text" id="dlgText"></div>
-    <div class="choices" id="dlgChoices"></div>
-  </div>
+    <div class="game-container">
+        <div class="intro-screen" id="introScreen">
+            <div class="intro-title">BUK</div>
+            <div class="intro-subtitle">Shadow Fight Arena</div>
+            <button class="start-button" onclick="startGame()">BEGIN THE BATTLE</button>
+        </div>
 
-  <!-- LIBRARIES -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/postprocessing/EffectComposer.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/postprocessing/RenderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/postprocessing/UnrealBloomPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/noisejs/2.1.0/perlin.min.js"></script>
-  <script>
-  // ===== GLOBALS & STATE =====
-  let scene, camera, renderer, clock, composer, bloomPass, physicsWorld;
-  let controlsEnabled = false, inCutscene = false;
-  const state = {
-    hp:100, honor:100, inventory:[], dialogueQueue:[], storyState:'start'
-  };
-  const npcs = [], quests = [];
-  const raycaster = new THREE.Raycaster();
-  const keys = {};
-  let weatherSystem, dayNightCycle, cinematic;
+        <div class="arena" id="arena" style="display: none;">
+            <div class="ground"></div>
+            
+            <div class="health-bar left">
+                <div class="health-fill" id="kirmadaHealth" style="width: 100%;"></div>
+                <div class="health-text">KIRMADA</div>
+            </div>
+            
+            <div class="health-bar right">
+                <div class="health-fill" id="babaHealth" style="width: 100%;"></div>
+                <div class="health-text">BABA</div>
+            </div>
 
-  // ===== INIT =====
-  function init(){
-    // Renderer & Scene
-    const canvas = document.getElementById('gameCanvas');
-    renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-    renderer.setPixelRatio(window.devicePixelRatio);
-    onWindowResize();
-    document.body.addEventListener('keydown', onFirstKey, {once:true});
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(60,1,0.1,2000);
-    camera.position.set(0,3,8);
-    camera.add(new THREE.AudioListener());
-    clock = new THREE.Clock();
+            <div class="fighter kirmada" id="kirmada">
+                <div class="arm-left"></div>
+                <div class="arm-right"></div>
+                <div class="leg-left"></div>
+                <div class="leg-right"></div>
+                <div class="eye-left"></div>
+                <div class="eye-right"></div>
+            </div>
+            <div class="fighter baba" id="baba">
+                <div class="arm-left"></div>
+                <div class="arm-right"></div>
+                <div class="leg-left"></div>
+                <div class="leg-right"></div>
+                <div class="eye-left"></div>
+                <div class="eye-right"></div>
+            </div>
 
-    // Lights
-    const hemi = new THREE.HemisphereLight(0xbbbbff,0x444422,1.2);
-    const dir = new THREE.DirectionalLight(0xffffff,0.8);
-    dir.position.set(-10,20,-10);
-    scene.add(hemi,dir);
+            <div class="controls">
+                <strong>CONTROLS:</strong><br>
+                A/D - Move | W - Jump<br>
+                J - Punch | K - Kick | L - Block<br>
+                Combos: J+J, K+K, J+K
+            </div>
 
-    // Physics
-    physicsWorld = new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});
-    physicsWorld.broadphase = new CANNON.SAPBroadphase(physicsWorld);
-    physicsWorld.solver.iterations = 10;
+            <div class="dialogue-box" id="dialogue" style="display: none;"></div>
+            <div class="combo-indicator" id="comboIndicator" style="display: none;"></div>
+        </div>
+    </div>
 
-    // PostFX
-    composer = new THREE.EffectComposer(renderer);
-    composer.addPass(new THREE.RenderPass(scene,camera));
-    bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.2,0.4,0.85);
-    composer.addPass(bloomPass);
+    <script>
+        class FightingGame {
+            constructor() {
+                this.gameStarted = false;
+                this.kirmadaHealth = 100;
+                this.babaHealth = 200;
+                this.kirmadaX = 200;
+                this.babaX = window.innerWidth - 280;
+                this.kirmadaCombo = [];
+                this.babaCombo = [];
+                this.dialogues = [
+                    { speaker: 'Kirmada', text: 'Mere baba!' },
+                    { speaker: 'Baba', text: 'Yare Yare watashino Nitin nation' },
+                    { speaker: 'Kirmada', text: 'You cannot escape your destiny!' },
+                    { speaker: 'Baba', text: 'Your darkness ends here, shadow warrior!' },
+                    { speaker: 'Kirmada', text: 'I am the void that consumes all!' },
+                    { speaker: 'Baba', text: 'Light always triumphs over darkness!' }
+                ];
+                this.currentDialogue = 0;
+                this.gameOver = false;
+                this.keys = {};
+                this.lastAttack = 0;
+                this.babaAI = {
+                    lastAction: 0,
+                    nextAction: 0,
+                    aggressiveness: 1.0,
+                    punchingMode: true,
+                    lastPunch: 0
+                };
+                
+                this.bindEvents();
+                this.showIntroDialogue();
+            }
 
-    // Systems
-    proceduralTerrain();
-    dayNightCycle = new DayNightCycle();
-    weatherSystem = new WeatherSystem();
-    spawnFoliage();
-    spawnNPCs();
-    initQuests();
-    storyEngine.init();
-    cinematic = new CinematicTimeline();
-    createWeapons();
-    initSounds();
+            bindEvents() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    this.handleInput(e.key.toLowerCase());
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+            }
 
-    // Events
-    window.addEventListener('resize',onWindowResize);
-    window.addEventListener('keydown',e=>keys[e.code]=true);
-    window.addEventListener('keyup',e=>keys[e.code]=false);
-    window.addEventListener('mousedown',onAttack);
-    window.addEventListener('keydown',onGlobalKeys);
-    animate();
-  }
+            startGame() {
+                document.getElementById('introScreen').style.display = 'none';
+                document.getElementById('arena').style.display = 'block';
+                this.gameStarted = true;
+                this.gameLoop();
+                this.babaAILoop();
+            }
 
-  // ===== FIRST KEY & INTRO =====
-  function onFirstKey(){
-    document.getElementById('intro').classList.add('hidden');
-    controlsEnabled = true;
-    launchBuk();
-    storyEngine.start();
-  }
+            showIntroDialogue() {
+                setTimeout(() => {
+                    this.showDialogue(this.dialogues[0]);
+                }, 1000);
+            }
 
-  // ===== WINDOW RESIZE =====
-  function onWindowResize(){
-    renderer.setSize(window.innerWidth,window.innerHeight);
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    if(composer) composer.setSize(window.innerWidth,window.innerHeight);
-  }
+            showDialogue(dialogue) {
+                const dialogueBox = document.getElementById('dialogue');
+                dialogueBox.textContent = `${dialogue.speaker}: ${dialogue.text}`;
+                dialogueBox.style.display = 'block';
+                
+                setTimeout(() => {
+                    dialogueBox.style.display = 'none';
+                    this.currentDialogue++;
+                }, 3000);
+            }
 
-  // ===== ANIMATION LOOP =====
-  function animate(){
-    requestAnimationFrame(animate);
-    const dt = clock.getDelta();
-    if(controlsEnabled && !inCutscene){
-      updateControls(dt);
-      weatherSystem.update(dt);
-      dayNightCycle.update(dt);
-      updateNPCs(dt);
-      physicsWorld.step(dt);
-    }
-    composer.render(dt);
-  }
+            handleInput(key) {
+                if (!this.gameStarted || this.gameOver) return;
 
-  // ===== CONTROLS =====
-  function updateControls(dt){
-    const speed = 6;
-    const dir = new THREE.Vector3();
-    if(keys['KeyW']) dir.z-=1;
-    if(keys['KeyS']) dir.z+=1;
-    if(keys['KeyA']) dir.x-=1;
-    if(keys['KeyD']) dir.x+=1;
-    dir.normalize().multiplyScalar(speed*dt);
-    camera.position.add(dir);
-    // TODO: pointer lock mouse-look
-  }
+                const kirmada = document.getElementById('kirmada');
+                const now = Date.now();
 
-  // ===== PROCEDURAL TERRAIN =====
-  function proceduralTerrain(){
-    const size=200, seg=256;
-    const geometry = new THREE.PlaneGeometry(size,size,seg,seg);
-    geometry.rotateX(-Math.PI/2);
-    for(let i=0;i<geometry.attributes.position.count;i++){
-      const x=geometry.attributes.position.getX(i),
-            y=geometry.attributes.position.getZ(i);
-      const h = noise.perlin2(x/50,y/50)*8
-              + noise.perlin2(x/15,y/15)*2;
-      geometry.attributes.position.setY(i,h);
-    }
-    geometry.computeVertexNormals();
-    const mat = new THREE.MeshStandardMaterial({color:0x556655,flatShading:true});
-    scene.add(new THREE.Mesh(geometry,mat));
-    // Physics ground body
-    const ground = new CANNON.Body({mass:0});
-    const shape = heightfieldShapeFromGeometry(geometry);
-    ground.addShape(shape);
-    physicsWorld.addBody(ground);
-  }
-  function heightfieldShapeFromGeometry(geo){
-    const pts = [], w = geo.parameters.widthSegments+1;
-    for(let i=0;i<=geo.parameters.heightSegments;i++){
-      const row=[];
-      for(let j=0;j<=geo.parameters.widthSegments;j++){
-        row.push(geo.attributes.position.getY(i*w + j));
-      }
-      pts.push(row);
-    }
-    return new CANNON.Heightfield(pts,{elementSize:geo.parameters.width/geo.parameters.widthSegments});
-  }
+                switch(key) {
+                    case 'a':
+                        if (this.kirmadaX > 50) {
+                            this.kirmadaX -= 15;
+                            kirmada.style.left = this.kirmadaX + 'px';
+                        }
+                        break;
+                    case 'd':
+                        if (this.kirmadaX < window.innerWidth - 330) {
+                            this.kirmadaX += 15;
+                            kirmada.style.left = this.kirmadaX + 'px';
+                        }
+                        break;
+                    case 'w':
+                        if (!kirmada.classList.contains('jumping')) {
+                            kirmada.classList.add('jumping');
+                            setTimeout(() => kirmada.classList.remove('jumping'), 600);
+                        }
+                        break;
+                    case 'j':
+                        if (now - this.lastAttack > 300) {
+                            this.kirmadaAttack('punch');
+                            this.kirmadaCombo.push('punch');
+                            this.checkCombo('kirmada');
+                        }
+                        break;
+                    case 'k':
+                        if (now - this.lastAttack > 300) {
+                            this.kirmadaAttack('kick');
+                            this.kirmadaCombo.push('kick');
+                            this.checkCombo('kirmada');
+                        }
+                        break;
+                    case 'l':
+                        kirmada.classList.add('blocking');
+                        setTimeout(() => kirmada.classList.remove('blocking'), 400);
+                        break;
+                }
+            }
 
-  // ===== FOLIAGE & PARTICLES =====
-  function spawnFoliage(){
-    const treeGeo = new THREE.ConeGeometry(0.5,2,8);
-    const treeMat = new THREE.MeshStandardMaterial({color:0x2a4b1f});
-    const inst = new THREE.InstancedMesh(treeGeo,treeMat,500);
-    const dummy = new THREE.Object3D();
-    for(let i=0;i<500;i++){
-      dummy.position.set((Math.random()-0.5)*100,0,(Math.random()-0.5)*100);
-      dummy.rotation.y = Math.random()*Math.PI*2;
-      dummy.updateMatrix();
-      inst.setMatrixAt(i,dummy.matrix);
-    }
-    scene.add(inst);
-    // Cherry blossoms particle system
-    const particlesGeo = new THREE.BufferGeometry();
-    const count = 1000;
-    const positions = new Float32Array(count*3);
-    for(let i=0;i<count*3;i++) positions[i]= (Math.random()-0.5)*60 + (i%3===1?10:0);
-    particlesGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
-    const pMat = new THREE.PointsMaterial({color:0xffc0cb,size:0.2,transparent:true,opacity:0.8});
-    const blossoms = new THREE.Points(particlesGeo,pMat);
-    scene.add(blossoms);
-    // animate blossoms
-    blossoms.userData.update = dt=>{
-      const pos = blossoms.geometry.attributes.position.array;
-      for(let i=1;i<pos.length;i+=3){
-        pos[i]-=dt*1;
-        if(pos[i]<0) pos[i]=20;
-      }
-      blossoms.geometry.attributes.position.needsUpdate=true;
-    };
-  }
+            kirmadaAttack(type) {
+                const kirmada = document.getElementById('kirmada');
+                kirmada.classList.add('attacking');
+                this.lastAttack = Date.now();
 
-  // ===== DAY/NIGHT CYCLE =====
-  class DayNightCycle {
-    constructor(){
-      this.time=0; // 0–24 hrs
-      this.sun = new THREE.DirectionalLight(0xffffff,1);
-      scene.add(this.sun);
-    }
-    update(dt){
-      this.time = (this.time + dt*0.1) % 24;
-      const theta = (this.time/24)*Math.PI*2;
-      this.sun.position.set(Math.cos(theta)*50,Math.sin(theta)*50,0);
-      this.sun.intensity = Math.max(0,Math.sin(theta));
-      const col = new THREE.Color().setHSL(0.6 - 0.5*Math.sin(theta),0.5,0.5);
-      renderer.setClearColor(col);
-    }
-  }
+                const distance = Math.abs(this.kirmadaX - this.babaX);
+                if (distance < 120) {
+                    const damage = type === 'kick' ? 15 : 10;
+                    this.babaHealth = Math.max(0, this.babaHealth - damage);
+                    this.updateHealth();
+                    this.createAttackEffect(this.babaX, 150);
+                    
+                    if (this.currentDialogue < this.dialogues.length && Math.random() < 0.3) {
+                        this.showDialogue(this.dialogues[this.currentDialogue]);
+                    }
+                }
 
-  // ===== WEATHER SYSTEM =====
-  class WeatherSystem {
-    constructor(){
-      this.particles = [];
-      this.rainGeo = new THREE.BufferGeometry();
-      const rainCount=2000;
-      const pos = new Float32Array(rainCount*3);
-      for(let i=0;i<rainCount;i++){
-        pos[i*3]= (Math.random()-0.5)*200;
-        pos[i*3+1]= Math.random()*100 + 10;
-        pos[i*3+2]= (Math.random()-0.5)*200;
-      }
-      this.rainGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-      this.rainMat = new THREE.PointsMaterial({color:0xaaaaaa,size:0.1,transparent:true,opacity:0.6});
-      this.rain = new THREE.Points(this.rainGeo,this.rainMat);
-      scene.add(this.rain);
-      this.overlay = document.getElementById('weatherOverlay');
-      this.mode='rain'; // rain|clear
-    }
-    update(dt){
-      if(this.mode==='rain'){
-        const pos = this.rain.geometry.attributes.position.array;
-        for(let i=1;i<pos.length;i+=3){
-          pos[i]-=dt*50;
-          if(pos[i]<0) pos[i]=Math.random()*100+50;
+                setTimeout(() => kirmada.classList.remove('attacking'), 300);
+            }
+
+            babaAttack(type) {
+                const baba = document.getElementById('baba');
+                baba.classList.add('attacking');
+
+                const distance = Math.abs(this.kirmadaX - this.babaX);
+                if (distance < 120) {
+                    const damage = type === 'kick' ? 15 : 10;
+                    this.kirmadaHealth = Math.max(0, this.kirmadaHealth - damage);
+                    this.updateHealth();
+                    this.createAttackEffect(this.kirmadaX, 150);
+                }
+
+                setTimeout(() => baba.classList.remove('attacking'), 300);
+            }
+
+            checkCombo(fighter) {
+                const combo = fighter === 'kirmada' ? this.kirmadaCombo : this.babaCombo;
+                
+                if (combo.length >= 2) {
+                    const lastTwo = combo.slice(-2);
+                    let comboName = '';
+                    let damage = 0;
+
+                    if (lastTwo[0] === 'punch' && lastTwo[1] === 'punch') {
+                        comboName = 'DOUBLE PUNCH!';
+                        damage = 25;
+                    } else if (lastTwo[0] === 'kick' && lastTwo[1] === 'kick') {
+                        comboName = 'DOUBLE KICK!';
+                        damage = 30;
+                    } else if ((lastTwo[0] === 'punch' && lastTwo[1] === 'kick') ||
+                               (lastTwo[0] === 'kick' && lastTwo[1] === 'punch')) {
+                        comboName = 'COMBO ATTACK!';
+                        damage = 35;
+                    }
+
+                    if (comboName) {
+                        this.showCombo(comboName);
+                        const distance = Math.abs(this.kirmadaX - this.babaX);
+                        if (distance < 120) {
+                            if (fighter === 'kirmada') {
+                                this.babaHealth = Math.max(0, this.babaHealth - damage);
+                            } else {
+                                this.kirmadaHealth = Math.max(0, this.kirmadaHealth - damage);
+                            }
+                            this.updateHealth();
+                        }
+                        combo.length = 0;
+                    }
+                }
+
+                setTimeout(() => {
+                    combo.length = 0;
+                }, 1500);
+            }
+
+            showCombo(comboName) {
+                const indicator = document.getElementById('comboIndicator');
+                indicator.textContent = comboName;
+                indicator.style.display = 'block';
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 1000);
+            }
+
+            babaAILoop() {
+                if (!this.gameStarted || this.gameOver) return;
+
+                const now = Date.now();
+                
+                // Continuous punching behavior
+                if (now - this.babaAI.lastPunch > 1200) { // Punch every 1200ms (slower)
+                    const distance = Math.abs(this.kirmadaX - this.babaX);
+                    if (distance < 130) {
+                        this.babaAttack('punch');
+                        this.babaCombo.push('punch');
+                        this.checkCombo('baba');
+                        this.babaAI.lastPunch = now;
+                    }
+                }
+
+                // Other AI actions (less frequent)
+                if (now > this.babaAI.nextAction) {
+                    this.executeBabaAI();
+                    this.babaAI.nextAction = now + (Math.random() * 1000 + 600); // Slightly slower reactions
+                }
+
+                setTimeout(() => this.babaAILoop(), 100); // Back to normal update speed
+            }
+
+            executeBabaAI() {
+                const distance = Math.abs(this.kirmadaX - this.babaX);
+                const baba = document.getElementById('baba');
+                const actions = [];
+
+                // Prioritize getting close for continuous punching
+                if (distance > 120) {
+                    actions.push('move_closer', 'move_closer', 'move_closer'); // Triple chance to move closer
+                } else if (distance < 60) {
+                    actions.push('move_away', 'attack', 'attack'); // Stay in punching range
+                } else {
+                    actions.push('attack', 'attack', 'attack', 'kick'); // Mostly attacks
+                }
+
+                const action = actions[Math.floor(Math.random() * actions.length)];
+
+                switch(action) {
+                    case 'move_closer':
+                        if (this.babaX > this.kirmadaX + 80) {
+                            this.babaX -= 25; // Faster movement
+                        } else if (this.babaX < this.kirmadaX - 80) {
+                            this.babaX += 25;
+                        }
+                        this.babaX = Math.max(50, Math.min(window.innerWidth - 130, this.babaX));
+                        baba.style.left = this.babaX + 'px';
+                        break;
+                    case 'move_away':
+                        if (this.babaX > this.kirmadaX) {
+                            this.babaX = Math.min(window.innerWidth - 130, this.babaX + 15);
+                        } else {
+                            this.babaX = Math.max(50, this.babaX - 15);
+                        }
+                        baba.style.left = this.babaX + 'px';
+                        break;
+                    case 'attack':
+                        const attackType = Math.random() < 0.9 ? 'punch' : 'kick'; // 90% punches
+                        this.babaAttack(attackType);
+                        this.babaCombo.push(attackType);
+                        this.checkCombo('baba');
+                        break;
+                    case 'kick':
+                        this.babaAttack('kick');
+                        this.babaCombo.push('kick');
+                        this.checkCombo('baba');
+                        break;
+                }
+            }
+
+            createAttackEffect(x, y) {
+                const effect = document.createElement('div');
+                effect.className = 'attack-effect';
+                effect.style.left = (x + 40) + 'px';
+                effect.style.bottom = y + 'px';
+                document.getElementById('arena').appendChild(effect);
+
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 300);
+            }
+
+            updateHealth() {
+                document.getElementById('kirmadaHealth').style.width = this.kirmadaHealth + '%';
+                document.getElementById('babaHealth').style.width = (this.babaHealth / 2) + '%';
+
+                if (this.kirmadaHealth <= 0 || this.babaHealth <= 0) {
+                    this.endGame();
+                }
+            }
+
+            endGame() {
+                this.gameOver = true;
+                const winner = this.kirmadaHealth > 0 ? 'KIRMADA' : 'BABA';
+                
+                const gameOverDiv = document.createElement('div');
+                gameOverDiv.className = 'game-over';
+                gameOverDiv.innerHTML = `
+                    <div>GAME OVER</div>
+                    <div style="margin: 20px 0; font-size: 28px; color: #ffff00;">${winner} WINS!</div>
+                    <button class="restart-btn" onclick="location.reload()">RESTART BATTLE</button>
+                `;
+                document.getElementById('arena').appendChild(gameOverDiv);
+            }
+
+            gameLoop() {
+                if (!this.gameStarted) return;
+
+                if (this.keys['a'] && this.kirmadaX > 50) {
+                    this.kirmadaX -= 5;
+                    document.getElementById('kirmada').style.left = this.kirmadaX + 'px';
+                }
+                if (this.keys['d'] && this.kirmadaX < window.innerWidth - 330) {
+                    this.kirmadaX += 5;
+                    document.getElementById('kirmada').style.left = this.kirmadaX + 'px';
+                }
+
+                requestAnimationFrame(() => this.gameLoop());
+            }
         }
-        this.rain.geometry.attributes.position.needsUpdate=true;
-        this.overlay.style.background='rgba(50,50,60,0.1)';
-      }
-    }
-  }
 
-  // ===== NPC AI =====
-  class NPC {
-    constructor(name,model,pos,dialogues){
-      this.name=name; this.dialogues=dialogues;
-      this.state='idle'; // idle|wander|chase
-      this.model=model.clone();
-      this.model.position.copy(pos);
-      scene.add(this.model);
-      this.dest=pos.clone();
-    }
-    update(dt){
-      switch(this.state){
-        case 'idle': if(Math.random()<dt*0.2) this.state='wander'; break;
-        case 'wander':
-          if(this.model.position.distanceTo(this.dest)<1) {
-            this.dest.set((Math.random()-0.5)*100,1,(Math.random()-0.5)*100);
-          } else {
-            this.model.position.lerp(this.dest,dt*0.5);
-          }
-          break;
-        case 'chase':
-          this.model.position.lerp(camera.position,dt*0.8);
-          if(this.model.position.distanceTo(camera.position)<2){
-            queueDialogue([{ speaker:this.name, text:'You cannot escape!', choices:[
-              { text:'Fight!', onChoose:()=>{} }
-            ]}]);
-            this.state='idle';
-          }
-          break;
-      }
-      // detect player
-      if(camera.position.distanceTo(this.model.position)<10 && this.state==='idle') this.state='chase';
-    }
-    talk(){ queueDialogue(this.dialogues.map(d=>({...d}))); }
-  }
-  function spawnNPCs(){
-    const baseGeo = new THREE.CapsuleGeometry(0.5,1,4,8);
-    const baseMat = new THREE.MeshStandardMaterial({color:0x884422});
-    const pos1 = new THREE.Vector3(8,1, -5);
-    const ryu = new NPC('Ryu the Ronin', baseGeo, pos1, [
-      { speaker:'Ryu the Ronin', text:'Buk, take this AI-forged blade.', choices:[
-          { text:'Thank you.', onChoose:()=>state.inventory.push('Ronin Blade') }
-        ]}
-    ]);
-    const pos2 = new THREE.Vector3(-10,1,12);
-    const akira = new NPC('Lady Akira', baseGeo, pos2, [
-      { speaker:'Lady Akira', text:'The hidden shrine awaits.', choices:[
-          { text:'Guide me.', onChoose:()=>{} }
-        ]}
-    ]);
-    npcs.push(ryu,akira);
-  }
-  function updateNPCs(dt){
-    npcs.forEach(n=>n.update(dt));
-  }
+        let game;
 
-  // ===== QUESTS & STORY =====
-  function initQuests(){
-    quests.push({id:1,title:'Bandit Threat',desc:'Eliminate 5 bandits',status:'not started',prog:0,goal:5});
-  }
-  function updateQuest(id){
-    const q = quests.find(q=>q.id===id);
-    if(q.status==='active'){
-      q.prog++;
-      if(q.prog>=q.goal){
-        q.status='completed';
-        state.honor = Math.min(100,state.honor+10);
-        updateHUD();
-        queueDialogue([{ speaker:'System', text:`Quest '${q.title}' completed!`, choices:[
-          { text:'OK', onChoose:()=>{} }
-        ]}]);
-      }
-    }
-  }
-
-  const storyEngine = {
-    nodes:{},
-    init(){
-      this.nodes.start = { text:'Buk at fortress gate.', choices:[
-        { text:'Enter bravely', next:'meetTsukasa' },
-        { text:'Sneak inside', next:'secretPath' }
-      ]};
-      this.nodes.meetTsukasa = { text:'Tsukasa greets you.', choices:[
-        { text:'Bow', effect:()=>state.honor+=5, next:'allyQuest' },
-        { text:'Draw sword', effect:()=>state.honor-=20, next:'duel' }
-      ]};
-      // … more nodes …
-    },
-    start(){ showNode('start'); },
-  };
-  function showNode(id){
-    const n = storyEngine.nodes[id];
-    queueDialogue([{
-      speaker:'Story', text:n.text, choices:n.choices.map(c=>({
-        text:c.text,
-        onChoose:()=>{
-          if(c.effect) c.effect();
-          if(c.next) showNode(c.next);
+        function startGame() {
+            game = new FightingGame();
+            game.startGame();
         }
-      }))
-    }]);
-  }
 
-  // ===== CINEMATIC TIMELINE =====
-  class CinematicTimeline {
-    constructor(){
-      this.keyframes = [
-        { t:0, pos:[0,5,10], look:[0,0,0] },
-        { t:3, pos:[0,10,0], look:[0,0,0] }
-      ];
-      this.time = 0; this.playing=false;
-    }
-    play(){
-      this.time=0; this.playing=true; controlsEnabled=false;
-      const tick = ()=> {
-        if(!this.playing) return;
-        this.time+=clock.getDelta();
-        const k0=this.keyframes[0], k1=this.keyframes[1];
-        const f = Math.min(this.time/k1.t,1);
-        camera.position.lerpVectors(
-          new THREE.Vector3(...k0.pos),
-          new THREE.Vector3(...k1.pos),
-          f
-        );
-        camera.lookAt(...k1.look);
-        if(f<1) requestAnimationFrame(tick);
-        else this.playing=false, controlsEnabled=true;
-      };
-      tick();
-    }
-  }
-
-  // ===== WEAPONS =====
-  let katanaMesh, bowMesh, equipped='katana';
-  function createWeapons(){
-    const kGeo=new THREE.CylinderGeometry(0.02,0.02,1,8);
-    const kMat=new THREE.MeshStandardMaterial({color:0xdddddd,metalness:1,roughness:0.2});
-    katanaMesh=new THREE.Mesh(kGeo,kMat);
-    katanaMesh.rotation.z=Math.PI/2;
-    camera.add(katanaMesh);
-    katanaMesh.position.set(0.7,-0.6,-1.2);
-    const bGeo=new THREE.TorusGeometry(0.6,0.02,8,50,Math.PI);
-    const bMat=new THREE.MeshStandardMaterial({color:0x884411});
-    bowMesh=new THREE.Mesh(bGeo,bMat);
-    camera.add(bowMesh);
-    bowMesh.position.set(-0.7,-0.6,-1.2);
-    bowMesh.visible=false;
-  }
-  function switchWeapon(){
-    if(equipped==='katana'){
-      katanaMesh.visible=false; bowMesh.visible=true; equipped='bow';
-    } else {
-      katanaMesh.visible=true; bowMesh.visible=false; equipped='katana';
-    }
-  }
-  function onAttack(){
-    if(equipped==='katana') swing();
-    else shoot();
-  }
-  function swing(){
-    const dur=0.3, angle=-Math.PI/2; let t=0;
-    (function anim(){
-      t+=clock.getDelta();
-      katanaMesh.rotation.y = THREE.MathUtils.lerp(0,angle,Math.min(t/dur,1));
-      if(t<dur) requestAnimationFrame(anim);
-      else {
-        katanaMesh.rotation.y=0;
-        raycaster.setFromCamera({x:0,y:0},camera);
-        const hit = raycaster.intersectObjects(npcs.map(n=>n.model))[0];
-        if(hit){
-          scene.remove(hit.object);
-          const idx=npcs.findIndex(n=>n.model===hit.object);
-          if(idx>=0){ npcs.splice(idx,1); updateQuest(1); }
-        }
-        playSlashSound();
-      }
-    })();
-  }
-  function shoot(){
-    const geo=new THREE.CylinderGeometry(0.01,0.01,1,6);
-    const mat=new THREE.MeshStandardMaterial({color:0x552200});
-    const arrow=new THREE.Mesh(geo,mat);
-    arrow.position.copy(camera.position);
-    arrow.quaternion.copy(camera.quaternion);
-    scene.add(arrow);
-    const vel = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).multiplyScalar(30);
-    let life=0;
-    (function fly(){
-      const dt=clock.getDelta(); life+=dt;
-      arrow.position.addScaledVector(vel,dt);
-      if(life<3) requestAnimationFrame(fly);
-      else scene.remove(arrow);
-    })();
-  }
-
-  // ===== SOUND =====
-  let ambientSound, slashSound;
-  function initSounds(){
-    const listener = new THREE.AudioListener();
-    camera.add(listener);
-    const loader = new THREE.AudioLoader();
-    ambientSound = new THREE.Audio(listener);
-    loader.load('https://example.com/ambient.mp3',buf=>{
-      ambientSound.setBuffer(buf); ambientSound.setLoop(true);
-      ambientSound.setVolume(0.4); ambientSound.play();
-    });
-    slashSound = new THREE.Audio(listener);
-    loader.load('https://example.com/slash.mp3',buf=>{
-      slashSound.setBuffer(buf); slashSound.setVolume(1.0);
-    });
-  }
-  function playSlashSound(){ if(slashSound.isPlaying) slashSound.stop(); slashSound.play(); }
-
-  // ===== DIALOGUE =====
-  function queueDialogue(lines){
-    state.dialogueQueue.push(...lines);
-    if(!state.currentDialogue) advanceDialogue();
-  }
-  function advanceDialogue(){
-    if(!state.dialogueQueue.length){ hideDialog(); return; }
-    const dlg = state.dialogueQueue.shift();
-    const box = document.getElementById('dialogue');
-    box.style.display='block';
-    document.getElementById('dlgSpeaker').innerText = dlg.speaker;
-    document.getElementById('dlgText').innerText = dlg.text;
-    const cont = document.getElementById('dlgChoices');
-    cont.innerHTML = '';
-    dlg.choices.forEach((c,i)=>{
-      const btn = document.createElement('div');
-      btn.className='choice'; btn.innerText=c.text;
-      btn.onclick = ()=>{
-        if(c.onChoose) c.onChoose();
-        advanceDialogue();
-      };
-      cont.appendChild(btn);
-    });
-    state.currentDialogue = dlg;
-  }
-  function hideDialog(){ document.getElementById('dialogue').style.display='none'; state.currentDialogue=null; }
-
-  // ===== HUD & SAVE =====
-  function updateHUD(){
-    document.getElementById('hpFill').style.width = `${state.hp}%`;
-    document.getElementById('honorFill').style.width = `${state.honor}%`;
-  }
-  const SAVE_KEY='buk_save';
-  function saveGame(){
-    const data = {
-      pos:camera.position.toArray(), hp:state.hp, honor:state.honor,
-      quests, story:state.storyState
-    };
-    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
-    queueDialogue([{ speaker:'System', text:'Game saved.', choices:[{text:'OK',onChoose:()=>{}}] }]);
-  }
-  function loadGame(){
-    const data = JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
-    if(data){
-      camera.position.fromArray(data.pos);
-      state.hp=data.hp; state.honor=data.honor;
-      quests.splice(0,quests.length,...data.quests);
-      state.storyState=data.story;
-      updateHUD();
-      queueDialogue([{ speaker:'System', text:'Game loaded.', choices:[{text:'OK',onChoose:()=>{}}] }]);
-    } else {
-      queueDialogue([{ speaker:'System', text:'No save found.', choices:[{text:'OK',onChoose:()=>{}}] }]);
-    }
-  }
-
-  // ===== GLOBAL KEYS =====
-  function onGlobalKeys(e){
-    if(e.code==='KeyQ') switchWeapon();
-    if(e.code==='KeyF5'){e.preventDefault(); saveGame();}
-    if(e.code==='KeyF9'){e.preventDefault(); loadGame();}
-    if(e.code==='KeyE') interact();
-  }
-
-  function interact(){
-    raycaster.setFromCamera({x:0,y:0},camera);
-    const hit = raycaster.intersectObjects(npcs.map(n=>n.model))[0];
-    if(hit) npcs.find(n=>n.model===hit.object).talk();
-  }
-
-  // ===== START =====
-  window.addEventListener('load', init);
-  </script>
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            game = new FightingGame();
+        });
+    </script>
 </body>
 </html>
