@@ -281,6 +281,38 @@
             text-shadow: 1px 1px 2px black;
         }
 
+        .mana-bar {
+            position: absolute;
+            top: 65px;
+            width: 300px;
+            height: 15px;
+            background: linear-gradient(90deg, #1a1a2e, #16213e);
+            border: 2px solid #4169E1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .mana-bar.left {
+            left: 50px;
+        }
+
+        .mana-bar.right {
+            right: 50px;
+        }
+
+        .mana-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4169E1, #0000FF, #4169E1);
+            transition: width 0.3s ease;
+            border-radius: 8px;
+            animation: manaGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes manaGlow {
+            0%, 100% { box-shadow: 0 0 5px #4169E1; }
+            50% { box-shadow: 0 0 15px #4169E1; }
+        }
+
         .controls {
             position: absolute;
             bottom: 20px;
@@ -338,6 +370,102 @@
             }
         }
 
+        .magic-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .fireball {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff4500, #ff6347, #ff0000);
+            box-shadow: 0 0 20px #ff4500;
+            animation: fireballMove 1s linear forwards;
+        }
+
+        @keyframes fireballMove {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.5) rotate(360deg); }
+        }
+
+        .minion {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            background: linear-gradient(180deg, #800080, #4B0082);
+            border: 1px solid #8B008B;
+            border-radius: 5px;
+            bottom: 150px;
+            transition: all 0.2s ease;
+        }
+
+        .minion::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #8B0000;
+        }
+
+        .chair {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            bottom: 150px;
+            background: linear-gradient(180deg, #8B4513, #654321);
+            border: 2px solid #A0522D;
+            border-radius: 5px;
+        }
+
+        .chair::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 5px;
+            width: 50px;
+            height: 25px;
+            background: linear-gradient(180deg, #8B4513, #654321);
+            border: 2px solid #A0522D;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .lightning {
+            position: absolute;
+            width: 6px;
+            height: 200px;
+            background: linear-gradient(180deg, #FFFF00, #FFFFFF, #FFFF00);
+            box-shadow: 0 0 20px #FFFF00;
+            animation: lightningStrike 0.5s ease-out forwards;
+        }
+
+        @keyframes lightningStrike {
+            0% { height: 0; opacity: 1; }
+            50% { height: 200px; opacity: 1; }
+            100% { height: 200px; opacity: 0; }
+        }
+
+        .ice-shard {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 40px solid #87CEEB;
+            filter: drop-shadow(0 0 10px #87CEEB);
+            animation: iceShardFly 0.8s linear forwards;
+        }
+
+        @keyframes iceShardFly {
+            0% { transform: scale(0) rotate(0deg); }
+            100% { transform: scale(1.5) rotate(720deg); }
+        }
+
         .jumping {
             animation: jumpAnimation 0.6s ease-in-out;
         }
@@ -363,6 +491,16 @@
         @keyframes blockAnimation {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(0.9); }
+        }
+
+        .magic-casting {
+            animation: magicCast 1s ease-in-out;
+            filter: brightness(1.5) saturate(2);
+        }
+
+        @keyframes magicCast {
+            0%, 100% { transform: scale(1); filter: brightness(1) saturate(1); }
+            50% { transform: scale(1.1); filter: brightness(2) saturate(3); }
         }
 
         .game-over {
@@ -408,14 +546,31 @@
             0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
             50% { opacity: 0.7; transform: translateX(-50%) scale(1.2); }
         }
+
+        .magic-indicator {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #4169E1;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px black;
+            animation: magicFlash 0.8s ease-in-out;
+        }
+
+        @keyframes magicFlash {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.8; transform: translateX(-50%) scale(1.3); }
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <div class="intro-screen" id="introScreen">
             <div class="intro-title">BUK</div>
-            <div class="intro-subtitle">Shadow Fight Arena</div>
-            <button class="start-button" onclick="startGame()">BEGIN THE BATTLE</button>
+            <div class="intro-subtitle">Shadow Fight Arena - Magic Edition</div>
+            <button class="start-button" onclick="startGame()">BEGIN THE MAGICAL BATTLE</button>
         </div>
 
         <div class="arena" id="arena" style="display: none;">
@@ -426,9 +581,17 @@
                 <div class="health-text">KIRMADA</div>
             </div>
             
+            <div class="mana-bar left">
+                <div class="mana-fill" id="kirmadaMana" style="width: 100%;"></div>
+            </div>
+            
             <div class="health-bar right">
                 <div class="health-fill" id="babaHealth" style="width: 100%;"></div>
                 <div class="health-text">BABA</div>
+            </div>
+
+            <div class="mana-bar right">
+                <div class="mana-fill" id="babaMana" style="width: 100%;"></div>
             </div>
 
             <div class="fighter kirmada" id="kirmada">
@@ -452,11 +615,15 @@
                 <strong>CONTROLS:</strong><br>
                 A/D - Move | W - Jump<br>
                 J - Punch | K - Kick | L - Block<br>
-                Combos: J+J, K+K, J+K
+                <strong>MAGIC:</strong><br>
+                Q - ARISE (30 mana) | E - THUNDERSTRIKE (40 mana)<br>
+                R - SIT (35 mana) | T - ICEWALL (45 mana)<br>
+                Y - SHADOWCLONE (50 mana)
             </div>
 
             <div class="dialogue-box" id="dialogue" style="display: none;"></div>
             <div class="combo-indicator" id="comboIndicator" style="display: none;"></div>
+            <div class="magic-indicator" id="magicIndicator" style="display: none;"></div>
         </div>
     </div>
 
@@ -464,30 +631,35 @@
         class FightingGame {
             constructor() {
                 this.gameStarted = false;
-                this.kirmadaHealth = 100;
-                this.babaHealth = 200;
+                this.kirmadaHealth = 400;
+                this.babaHealth = 800;
+                this.kirmadaMana = 100;
+                this.babaMana = 100;
                 this.kirmadaX = 200;
                 this.babaX = window.innerWidth - 280;
                 this.kirmadaCombo = [];
                 this.babaCombo = [];
+                this.minions = [];
+                this.magicEffects = [];
                 this.dialogues = [
-                    { speaker: 'Kirmada', text: 'Mere baba!' },
-                    { speaker: 'Baba', text: 'Yare Yare watashino Nitin nation' },
-                    { speaker: 'Kirmada', text: 'You cannot escape your destiny!' },
-                    { speaker: 'Baba', text: 'Your darkness ends here, shadow warrior!' },
-                    { speaker: 'Kirmada', text: 'I am the void that consumes all!' },
-                    { speaker: 'Baba', text: 'Light always triumphs over darkness!' }
+                    { speaker: 'Kirmada', text: 'Mere baba! Let the shadows consume you!' },
+                    { speaker: 'Baba', text: 'Yare Yare watashino Nitin nation! Your magic is weak!' },
+                    { speaker: 'Kirmada', text: 'ARISE, my dark servants!' },
+                    { speaker: 'Baba', text: 'Time to SIT and unleash fury!' },
+                    { speaker: 'Kirmada', text: 'Thunder shall strike you down!' },
+                    { speaker: 'Baba', text: 'Ice will freeze your dark soul!' }
                 ];
                 this.currentDialogue = 0;
                 this.gameOver = false;
                 this.keys = {};
                 this.lastAttack = 0;
+                this.lastMagic = 0;
                 this.babaAI = {
                     lastAction: 0,
                     nextAction: 0,
-                    aggressiveness: 1.0,
-                    punchingMode: true,
-                    lastPunch: 0
+                    lastMagic: 0,
+                    aggressiveness: 1.2,
+                    magicCooldown: 0
                 };
                 
                 this.bindEvents();
@@ -511,6 +683,7 @@
                 this.gameStarted = true;
                 this.gameLoop();
                 this.babaAILoop();
+                this.manaRegenLoop();
             }
 
             showIntroDialogue() {
@@ -573,173 +746,283 @@
                         kirmada.classList.add('blocking');
                         setTimeout(() => kirmada.classList.remove('blocking'), 400);
                         break;
+                    case 'q':
+                        if (now - this.lastMagic > 1000) {
+                            this.castMagic('kirmada', 'arise', 30);
+                        }
+                        break;
+                    case 'e':
+                        if (now - this.lastMagic > 1000) {
+                            this.castMagic('kirmada', 'thunderstrike', 40);
+                        }
+                        break;
+                    case 'r':
+                        if (now - this.lastMagic > 1000) {
+                            this.castMagic('kirmada', 'sit', 35);
+                        }
+                        break;
+                    case 't':
+                        if (now - this.lastMagic > 1000) {
+                            this.castMagic('kirmada', 'icewall', 45);
+                        }
+                        break;
+                    case 'y':
+                        if (now - this.lastMagic > 1000) {
+                            this.castMagic('kirmada', 'shadowclone', 50);
+                        }
+                        break;
                 }
+            }
+
+            castMagic(caster, spellType, manaCost) {
+                const mana = caster === 'kirmada' ? this.kirmadaMana : this.babaMana;
+                if (mana < manaCost) return;
+
+                // Deduct mana
+                if (caster === 'kirmada') {
+                    this.kirmadaMana = Math.max(0, this.kirmadaMana - manaCost);
+                } else {
+                    this.babaMana = Math.max(0, this.babaMana - manaCost);
+                }
+
+                this.updateMana();
+                this.lastMagic = Date.now();
+
+                const fighter = document.getElementById(caster);
+                fighter.classList.add('magic-casting');
+                setTimeout(() => fighter.classList.remove('magic-casting'), 1000);
+
+                this.showMagicIndicator(spellType.toUpperCase() + '!');
+
+                switch(spellType) {
+                    case 'arise':
+                        this.summonMinions(caster);
+                        break;
+                    case 'sit':
+                        this.createChairAttack(caster);
+                        break;
+                    case 'thunderstrike':
+                        this.castThunderstrike(caster);
+                        break;
+                    case 'icewall':
+                        this.castIceWall(caster);
+                        break;
+                    case 'shadowclone':
+                        this.createShadowClone(caster);
+                        break;
+                }
+            }
+
+            summonMinions(caster) {
+                const x = caster === 'kirmada' ? this.kirmadaX : this.babaX;
+                
+                for (let i = 0; i < 2; i++) {
+                    const minion = document.createElement('div');
+                    minion.className = 'minion';
+                    const minionX = x + (i === 0 ? -60 : 60);
+                    minion.style.left = minionX + 'px';
+                    
+                    document.getElementById('arena').appendChild(minion);
+                    
+                    const minionObj = {
+                        element: minion,
+                        x: minionX,
+                        health: 25,
+                        owner: caster,
+                        lastAttack: 0
+                    };
+                    
+                    this.minions.push(minionObj);
+                }
+
+                // Remove minions after 8 seconds
+                setTimeout(() => {
+                    this.minions = this.minions.filter(minion => {
+                        if (minion.owner === caster) {
+                            if (minion.element.parentNode) {
+                                minion.element.parentNode.removeChild(minion.element);
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
+                }, 8000);
+            }
+
+            createChairAttack(caster) {
+                const x = caster === 'kirmada' ? this.kirmadaX : this.babaX;
+                const target = caster === 'kirmada' ? 'baba' : 'kirmada';
+                
+                // Create chair
+                const chair = document.createElement('div');
+                chair.className = 'chair';
+                chair.style.left = x + 'px';
+                document.getElementById('arena').appendChild(chair);
+
+                // Sit animation for caster
+                const fighter = document.getElementById(caster);
+                fighter.style.bottom =                '130px';
+                setTimeout(() => {
+                    fighter.style.bottom = '150px';
+                    chair.parentNode.removeChild(chair);
+                }, 1000);
+
+                // Check if chair hits opponent
+                const opponent = document.getElementById(target);
+                const opponentRect = opponent.getBoundingClientRect();
+                const chairRect = chair.getBoundingClientRect();
+
+                if (this.checkCollision(chairRect, opponentRect)) {
+                    this.dealDamage(target, 35);
+                    this.showAttackEffect(opponentRect.left + 40, opponentRect.top + 40);
+                }
+            }
+
+            castThunderstrike(caster) {
+                const target = caster === 'kirmada' ? 'baba' : 'kirmada';
+                const opponent = document.getElementById(target);
+                const opponentRect = opponent.getBoundingClientRect();
+                
+                // Create lightning effect
+                const lightning = document.createElement('div');
+                lightning.className = 'lightning';
+                lightning.style.left = (opponentRect.left + 40) + 'px';
+                lightning.style.top = '0';
+                document.getElementById('arena').appendChild(lightning);
+
+                // Deal damage
+                this.dealDamage(target, 40);
+                
+                setTimeout(() => {
+                    lightning.parentNode.removeChild(lightning);
+                }, 500);
+            }
+
+            castIceWall(caster) {
+                const x = caster === 'kirmada' ? this.kirmadaX + 100 : this.babaX - 100;
+                const target = caster === 'kirmada' ? 'baba' : 'kirmada';
+                
+                // Create ice shards
+                for (let i = 0; i < 3; i++) {
+                    const iceShard = document.createElement('div');
+                    iceShard.className = 'ice-shard';
+                    iceShard.style.left = x + 'px';
+                    iceShard.style.bottom = (150 + i * 20) + 'px';
+                    document.getElementById('arena').appendChild(iceShard);
+
+                    // Check collision with opponent
+                    setTimeout(() => {
+                        const opponent = document.getElementById(target);
+                        const opponentRect = opponent.getBoundingClientRect();
+                        const shardRect = iceShard.getBoundingClientRect();
+
+                        if (this.checkCollision(shardRect, opponentRect)) {
+                            this.dealDamage(target, 15);
+                            this.showAttackEffect(opponentRect.left + 40, opponentRect.top + 40);
+                        }
+
+                        if (iceShard.parentNode) {
+                            iceShard.parentNode.removeChild(iceShard);
+                        }
+                    }, 800);
+                }
+            }
+
+            createShadowClone(caster) {
+                const x = caster === 'kirmada' ? this.kirmadaX + 80 : this.babaX - 80;
+                const clone = document.createElement('div');
+                clone.className = 'fighter ' + caster;
+                clone.style.left = x + 'px';
+                
+                // Add body parts to clone
+                const parts = ['arm-left', 'arm-right', 'leg-left', 'leg-right', 'eye-left', 'eye-right'];
+                parts.forEach(part => {
+                    const element = document.createElement('div');
+                    element.className = part;
+                    clone.appendChild(element);
+                });
+                
+                document.getElementById('arena').appendChild(clone);
+
+                // Make clone attack
+                setTimeout(() => {
+                    const target = caster === 'kirmada' ? 'baba' : 'kirmada';
+                    const opponent = document.getElementById(target);
+                    const opponentRect = opponent.getBoundingClientRect();
+                    
+                    this.dealDamage(target, 25);
+                    this.showAttackEffect(opponentRect.left + 40, opponentRect.top + 40);
+                    
+                    if (clone.parentNode) {
+                        clone.parentNode.removeChild(clone);
+                    }
+                }, 1000);
             }
 
             kirmadaAttack(type) {
                 const kirmada = document.getElementById('kirmada');
+                const baba = document.getElementById('baba');
+                
                 kirmada.classList.add('attacking');
-                this.lastAttack = Date.now();
-
-                const distance = Math.abs(this.kirmadaX - this.babaX);
-                if (distance < 120) {
-                    const damage = type === 'kick' ? 15 : 10;
-                    this.babaHealth = Math.max(0, this.babaHealth - damage);
-                    this.updateHealth();
-                    this.createAttackEffect(this.babaX, 150);
-                    
-                    if (this.currentDialogue < this.dialogues.length && Math.random() < 0.3) {
-                        this.showDialogue(this.dialogues[this.currentDialogue]);
-                    }
-                }
-
                 setTimeout(() => kirmada.classList.remove('attacking'), 300);
+                
+                const kirmadaRect = kirmada.getBoundingClientRect();
+                const babaRect = baba.getBoundingClientRect();
+                
+                if (this.checkCollision(kirmadaRect, babaRect)) {
+                    const damage = type === 'punch' ? 15 : 20;
+                    this.dealDamage('baba', damage);
+                    this.showAttackEffect(babaRect.left + 40, babaRect.top + 40);
+                }
+                
+                this.lastAttack = Date.now();
             }
 
             babaAttack(type) {
+                const kirmada = document.getElementById('kirmada');
                 const baba = document.getElementById('baba');
+                
                 baba.classList.add('attacking');
-
-                const distance = Math.abs(this.kirmadaX - this.babaX);
-                if (distance < 120) {
-                    const damage = type === 'kick' ? 15 : 10;
-                    this.kirmadaHealth = Math.max(0, this.kirmadaHealth - damage);
-                    this.updateHealth();
-                    this.createAttackEffect(this.kirmadaX, 150);
-                }
-
                 setTimeout(() => baba.classList.remove('attacking'), 300);
-            }
-
-            checkCombo(fighter) {
-                const combo = fighter === 'kirmada' ? this.kirmadaCombo : this.babaCombo;
                 
-                if (combo.length >= 2) {
-                    const lastTwo = combo.slice(-2);
-                    let comboName = '';
-                    let damage = 0;
-
-                    if (lastTwo[0] === 'punch' && lastTwo[1] === 'punch') {
-                        comboName = 'DOUBLE PUNCH!';
-                        damage = 25;
-                    } else if (lastTwo[0] === 'kick' && lastTwo[1] === 'kick') {
-                        comboName = 'DOUBLE KICK!';
-                        damage = 30;
-                    } else if ((lastTwo[0] === 'punch' && lastTwo[1] === 'kick') ||
-                               (lastTwo[0] === 'kick' && lastTwo[1] === 'punch')) {
-                        comboName = 'COMBO ATTACK!';
-                        damage = 35;
-                    }
-
-                    if (comboName) {
-                        this.showCombo(comboName);
-                        const distance = Math.abs(this.kirmadaX - this.babaX);
-                        if (distance < 120) {
-                            if (fighter === 'kirmada') {
-                                this.babaHealth = Math.max(0, this.babaHealth - damage);
-                            } else {
-                                this.kirmadaHealth = Math.max(0, this.kirmadaHealth - damage);
-                            }
-                            this.updateHealth();
-                        }
-                        combo.length = 0;
-                    }
-                }
-
-                setTimeout(() => {
-                    combo.length = 0;
-                }, 1500);
-            }
-
-            showCombo(comboName) {
-                const indicator = document.getElementById('comboIndicator');
-                indicator.textContent = comboName;
-                indicator.style.display = 'block';
-                setTimeout(() => {
-                    indicator.style.display = 'none';
-                }, 1000);
-            }
-
-            babaAILoop() {
-                if (!this.gameStarted || this.gameOver) return;
-
-                const now = Date.now();
+                const kirmadaRect = kirmada.getBoundingClientRect();
+                const babaRect = baba.getBoundingClientRect();
                 
-                // Continuous punching behavior
-                if (now - this.babaAI.lastPunch > 1200) { // Punch every 1200ms (slower)
-                    const distance = Math.abs(this.kirmadaX - this.babaX);
-                    if (distance < 130) {
-                        this.babaAttack('punch');
-                        this.babaCombo.push('punch');
-                        this.checkCombo('baba');
-                        this.babaAI.lastPunch = now;
-                    }
+                if (this.checkCollision(kirmadaRect, babaRect)) {
+                    const damage = type === 'punch' ? 10 : 15;
+                    this.dealDamage('kirmada', damage);
+                    this.showAttackEffect(kirmadaRect.left + 40, kirmadaRect.top + 40);
                 }
-
-                // Other AI actions (less frequent)
-                if (now > this.babaAI.nextAction) {
-                    this.executeBabaAI();
-                    this.babaAI.nextAction = now + (Math.random() * 1000 + 600); // Slightly slower reactions
-                }
-
-                setTimeout(() => this.babaAILoop(), 100); // Back to normal update speed
             }
 
-            executeBabaAI() {
-                const distance = Math.abs(this.kirmadaX - this.babaX);
-                const baba = document.getElementById('baba');
-                const actions = [];
+            checkCollision(rect1, rect2) {
+                return !(
+                    rect1.right < rect2.left || 
+                    rect1.left > rect2.right || 
+                    rect1.bottom < rect2.top || 
+                    rect1.top > rect2.bottom
+                );
+            }
 
-                // Prioritize getting close for continuous punching
-                if (distance > 120) {
-                    actions.push('move_closer', 'move_closer', 'move_closer'); // Triple chance to move closer
-                } else if (distance < 60) {
-                    actions.push('move_away', 'attack', 'attack'); // Stay in punching range
+            dealDamage(target, amount) {
+                if (target === 'kirmada') {
+                    this.kirmadaHealth = Math.max(0, this.kirmadaHealth - amount);
+                    document.getElementById('kirmadaHealth').style.width = (this.kirmadaHealth / 400 * 100) + '%';
                 } else {
-                    actions.push('attack', 'attack', 'attack', 'kick'); // Mostly attacks
+                    this.babaHealth = Math.max(0, this.babaHealth - amount);
+                    document.getElementById('babaHealth').style.width = (this.babaHealth / 800 * 100) + '%';
                 }
-
-                const action = actions[Math.floor(Math.random() * actions.length)];
-
-                switch(action) {
-                    case 'move_closer':
-                        if (this.babaX > this.kirmadaX + 80) {
-                            this.babaX -= 25; // Faster movement
-                        } else if (this.babaX < this.kirmadaX - 80) {
-                            this.babaX += 25;
-                        }
-                        this.babaX = Math.max(50, Math.min(window.innerWidth - 130, this.babaX));
-                        baba.style.left = this.babaX + 'px';
-                        break;
-                    case 'move_away':
-                        if (this.babaX > this.kirmadaX) {
-                            this.babaX = Math.min(window.innerWidth - 130, this.babaX + 15);
-                        } else {
-                            this.babaX = Math.max(50, this.babaX - 15);
-                        }
-                        baba.style.left = this.babaX + 'px';
-                        break;
-                    case 'attack':
-                        const attackType = Math.random() < 0.9 ? 'punch' : 'kick'; // 90% punches
-                        this.babaAttack(attackType);
-                        this.babaCombo.push(attackType);
-                        this.checkCombo('baba');
-                        break;
-                    case 'kick':
-                        this.babaAttack('kick');
-                        this.babaCombo.push('kick');
-                        this.checkCombo('baba');
-                        break;
-                }
+                
+                this.checkGameOver();
             }
 
-            createAttackEffect(x, y) {
+            showAttackEffect(x, y) {
                 const effect = document.createElement('div');
                 effect.className = 'attack-effect';
-                effect.style.left = (x + 40) + 'px';
-                effect.style.bottom = y + 'px';
+                effect.style.left = (x - 30) + 'px';
+                effect.style.top = (y - 30) + 'px';
                 document.getElementById('arena').appendChild(effect);
-
+                
                 setTimeout(() => {
                     if (effect.parentNode) {
                         effect.parentNode.removeChild(effect);
@@ -747,56 +1030,185 @@
                 }, 300);
             }
 
-            updateHealth() {
-                document.getElementById('kirmadaHealth').style.width = this.kirmadaHealth + '%';
-                document.getElementById('babaHealth').style.width = (this.babaHealth / 2) + '%';
-
-                if (this.kirmadaHealth <= 0 || this.babaHealth <= 0) {
-                    this.endGame();
+            checkCombo(caster) {
+                const combo = caster === 'kirmada' ? this.kirmadaCombo : this.babaCombo;
+                const now = Date.now();
+                
+                // Reset combo if too much time between attacks
+                if (combo.length > 0 && now - this.lastAttack > 1000) {
+                    if (caster === 'kirmada') {
+                        this.kirmadaCombo = [];
+                    } else {
+                        this.babaCombo = [];
+                    }
+                    return;
+                }
+                
+                // Check for special combos
+                if (combo.length >= 3) {
+                    const comboString = combo.slice(-3).join('-');
+                    let bonusDamage = 0;
+                    
+                    if (comboString === 'punch-punch-kick') {
+                        bonusDamage = 30;
+                        this.showComboIndicator('POWER COMBO!');
+                    } else if (comboString === 'kick-kick-punch') {
+                        bonusDamage = 25;
+                        this.showComboIndicator('SPEED COMBO!');
+                    }
+                    
+                    if (bonusDamage > 0) {
+                        const target = caster === 'kirmada' ? 'baba' : 'kirmada';
+                        this.dealDamage(target, bonusDamage);
+                        
+                        const opponent = document.getElementById(target);
+                        const rect = opponent.getBoundingClientRect();
+                        this.showAttackEffect(rect.left + 40, rect.top + 40);
+                    }
                 }
             }
 
-            endGame() {
-                this.gameOver = true;
-                const winner = this.kirmadaHealth > 0 ? 'KIRMADA' : 'BABA';
+            showComboIndicator(text) {
+                const indicator = document.getElementById('comboIndicator');
+                indicator.textContent = text;
+                indicator.style.display = 'block';
                 
-                const gameOverDiv = document.createElement('div');
-                gameOverDiv.className = 'game-over';
-                gameOverDiv.innerHTML = `
-                    <div>GAME OVER</div>
-                    <div style="margin: 20px 0; font-size: 28px; color: #ffff00;">${winner} WINS!</div>
-                    <button class="restart-btn" onclick="location.reload()">RESTART BATTLE</button>
-                `;
-                document.getElementById('arena').appendChild(gameOverDiv);
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 1000);
+            }
+
+            showMagicIndicator(text) {
+                const indicator = document.getElementById('magicIndicator');
+                indicator.textContent = text;
+                indicator.style.display = 'block';
+                
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 1000);
+            }
+
+            updateMana() {
+                document.getElementById('kirmadaMana').style.width = this.kirmadaMana + '%';
+                document.getElementById('babaMana').style.width = this.babaMana + '%';
+            }
+
+            manaRegenLoop() {
+                if (this.gameOver) return;
+                
+                this.kirmadaMana = Math.min(100, this.kirmadaMana + 0.5);
+                this.babaMana = Math.min(100, this.babaMana + 0.3);
+                this.updateMana();
+                
+                setTimeout(() => this.manaRegenLoop(), 100);
+            }
+
+            babaAILoop() {
+                if (this.gameOver) return;
+                
+                const now = Date.now();
+                const kirmada = document.getElementById('kirmada');
+                const baba = document.getElementById('baba');
+                const kirmadaRect = kirmada.getBoundingClientRect();
+                const babaRect = baba.getBoundingClientRect();
+                
+                // Random actions
+                if (now - this.babaAI.lastAction > this.babaAI.nextAction) {
+                    this.babaAI.lastAction = now;
+                    this.babaAI.nextAction = 500 + Math.random() * 1500;
+                    
+                    const action = Math.random();
+                    
+                    // Movement
+                    if (action < 0.3) {
+                        // Move toward Kirmada
+                        if (babaRect.left - kirmadaRect.right > 100) {
+                            this.babaX = Math.max(window.innerWidth - 280, this.babaX - 30);
+                            baba.style.left = this.babaX + 'px';
+                        }
+                    } else if (action < 0.6) {
+                        // Move away from Kirmada
+                        if (kirmadaRect.right - babaRect.left < 200) {
+                            this.babaX = Math.min(window.innerWidth - 100, this.babaX + 30);
+                            baba.style.left = this.babaX + 'px';
+                        }
+                    }
+                    
+                    // Attacks
+                    if (action < 0.8 && now - this.babaAI.lastMagic > this.babaAI.magicCooldown) {
+                        const magicTypes = ['sit', 'thunderstrike', 'icewall', 'shadowclone'];
+                        const magicType = magicTypes[Math.floor(Math.random() * magicTypes.length)];
+                        this.castMagic('baba', magicType, magicType === 'sit' ? 35 : magicType === 'thunderstrike' ? 40 : magicType === 'icewall' ? 45 : 50);
+                        this.babaAI.lastMagic = now;
+                        this.babaAI.magicCooldown = 3000 + Math.random() * 3000;
+                    } else if (action < 0.9) {
+                        this.babaAttack(Math.random() < 0.5 ? 'punch' : 'kick');
+                        this.babaCombo.push(Math.random() < 0.5 ? 'punch' : 'kick');
+                        this.checkCombo('baba');
+                    }
+                    
+                    // Jump occasionally
+                    if (action < 0.4 && !baba.classList.contains('jumping')) {
+                        baba.classList.add('jumping');
+                        setTimeout(() => baba.classList.remove('jumping'), 600);
+                    }
+                }
+                
+                setTimeout(() => this.babaAILoop(), 100);
+            }
+
+            checkGameOver() {
+                if (this.kirmadaHealth <= 0 || this.babaHealth <= 0) {
+                    this.gameOver = true;
+                    
+                    const winner = this.kirmadaHealth <= 0 ? 'BABA' : 'KIRMADA';
+                    const gameOverDiv = document.createElement('div');
+                    gameOverDiv.className = 'game-over';
+                    gameOverDiv.innerHTML = `
+                        <div>${winner} WINS!</div>
+                        <button class="restart-btn" onclick="window.location.reload()">PLAY AGAIN</button>
+                    `;
+                    
+                    document.getElementById('arena').appendChild(gameOverDiv);
+                }
             }
 
             gameLoop() {
-                if (!this.gameStarted) return;
-
-                if (this.keys['a'] && this.kirmadaX > 50) {
-                    this.kirmadaX -= 5;
-                    document.getElementById('kirmada').style.left = this.kirmadaX + 'px';
-                }
-                if (this.keys['d'] && this.kirmadaX < window.innerWidth - 330) {
-                    this.kirmadaX += 5;
-                    document.getElementById('kirmada').style.left = this.kirmadaX + 'px';
-                }
-
+                if (this.gameOver) return;
+                
+                // Minion behavior
+                this.minions.forEach(minion => {
+                    const target = minion.owner === 'kirmada' ? 'baba' : 'kirmada';
+                    const targetElement = document.getElementById(target);
+                    const targetRect = targetElement.getBoundingClientRect();
+                    const minionRect = minion.element.getBoundingClientRect();
+                    
+                    // Move toward opponent
+                    const direction = minion.owner === 'kirmada' ? 1 : -1;
+                    minion.x += direction * 2;
+                    minion.element.style.left = minion.x + 'px';
+                    
+                    // Attack if close enough
+                    if (Math.abs(minionRect.left - targetRect.left) < 60 && Date.now() - minion.lastAttack > 1000) {
+                        this.dealDamage(target, 5);
+                        minion.lastAttack = Date.now();
+                        this.showAttackEffect(targetRect.left + 40, targetRect.top + 40);
+                    }
+                });
+                
+                // Clean up dead minions
+                this.minions = this.minions.filter(minion => minion.health > 0);
+                
                 requestAnimationFrame(() => this.gameLoop());
             }
         }
 
-        let game;
+        // Initialize the game
+        const game = new FightingGame();
 
         function startGame() {
-            game = new FightingGame();
             game.startGame();
         }
-
-        // Initialize game when page loads
-        window.addEventListener('load', () => {
-            game = new FightingGame();
-        });
     </script>
 </body>
 </html>
